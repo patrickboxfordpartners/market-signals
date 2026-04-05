@@ -4,7 +4,8 @@ import cors from "cors";
 import { serve } from "inngest/express";
 import { inngest } from "./src/inngest/client.js";
 import * as functions from "./src/inngest/functions/index.js";
-import yahooFinance from "yahoo-finance2";
+import YahooFinance from "yahoo-finance2";
+const yahooFinance = new YahooFinance();
 
 const app = express();
 const port = process.env.PORT || 3001;
