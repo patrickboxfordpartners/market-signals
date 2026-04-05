@@ -33,6 +33,19 @@ const TWITTER_BEARER_TOKEN = process.env.TWITTER_BEARER_TOKEN;
 const REDDIT_CLIENT_ID = process.env.REDDIT_CLIENT_ID;
 const REDDIT_CLIENT_SECRET = process.env.REDDIT_CLIENT_SECRET;
 const NEWS_API_KEY = process.env.NEWS_API_KEY;
+const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY;
+
+interface FinnhubArticle {
+  category: string;
+  datetime: number;
+  headline: string;
+  id: number;
+  image: string;
+  related: string;
+  source: string;
+  summary: string;
+  url: string;
+}
 
 // Require $ prefix OR match against known symbols list to avoid false positives
 // Words like ALL, ON, IT, NOW etc. will only match with $ prefix
@@ -218,6 +231,48 @@ export const scanMentions = inngest.createFunction(
       return articles;
     });
 
+    // Scan Finnhub company news (60 calls/min free tier)
+    const finnhubArticles = await step.run("scan-finnhub", async () => {
+      if (!FINNHUB_API_KEY) {
+        console.warn("Finnhub API key not configured");
+        return [];
+      }
+
+      const articles: FinnhubArticle[] = [];
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const from = yesterday.toISOString().split("T")[0];
+      const to = today.toISOString().split("T")[0];
+
+      for (const symbol of tickerSymbols) {
+        try {
+          const response = await fetch(
+            `https://finnhub.io/api/v1/company-news?symbol=${symbol}&from=${from}&to=${to}&token=${FINNHUB_API_KEY}`
+          );
+
+          if (!response.ok) {
+            console.error(`Finnhub error for ${symbol}:`, response.status);
+            continue;
+          }
+
+          const data: FinnhubArticle[] = await response.json();
+          // Tag each article with the queried symbol via the `related` field
+          for (const article of data.slice(0, 10)) {
+            if (!article.related) article.related = symbol;
+            articles.push(article);
+          }
+
+          // Stay within 60 calls/min
+          await new Promise(resolve => setTimeout(resolve, 200));
+        } catch (error) {
+          console.error(`Error fetching Finnhub news for ${symbol}:`, error);
+        }
+      }
+
+      return articles;
+    });
+
     // Store mentions in database
     const stored = await step.run("store-mentions", async () => {
       const mentionsToStore: Array<{
@@ -241,6 +296,9 @@ export const scanMentions = inngest.createFunction(
       }
       for (const article of newsArticles) {
         sourceKeys.add(`news:${article.source.name}`);
+      }
+      for (const article of finnhubArticles) {
+        sourceKeys.add(`finnhub:${article.source}`);
       }
 
       // Fetch all existing sources in one query
@@ -371,6 +429,33 @@ export const scanMentions = inngest.createFunction(
         }
       }
 
+      // Process Finnhub articles
+      for (const article of finnhubArticles) {
+        const relatedSymbols = article.related
+          ? article.related.split(",").map(s => s.trim())
+          : [];
+        const tickers = relatedSymbols.filter(s => tickerSymbols.includes(s));
+        if (tickers.length === 0) {
+          // Fall back to text extraction
+          tickers.push(...extractTickers(`${article.headline} ${article.summary}`, tickerSymbols));
+        }
+        for (const symbol of tickers) {
+          const ticker = activeTickers.find(t => t.symbol === symbol);
+          const sourceId = sourceMap.get(`finnhub:${article.source}`);
+          if (!ticker || !sourceId) continue;
+
+          mentionsToStore.push({
+            ticker_id: ticker.id,
+            source_id: sourceId,
+            content: `${article.headline}. ${article.summary}`,
+            url: article.url,
+            platform: "finnhub",
+            mentioned_at: new Date(article.datetime * 1000).toISOString(),
+            engagement_score: 0,
+          });
+        }
+      }
+
       // Upsert to handle duplicates (same ticker + platform + url)
       if (mentionsToStore.length > 0) {
         const { error } = await supabase
@@ -410,9 +495,16 @@ export const scanMentions = inngest.createFunction(
         },
         {
           scan_type: "news",
-          status: !NEWS_API_KEY ? "skipped" : newsArticles.length >= 0 ? "success" : "error",
+          status: !NEWS_API_KEY ? "skipped" : "success",
           mentions_found: newsArticles.length,
           error_message: !NEWS_API_KEY ? "NewsAPI key not configured" : null,
+          completed_at: new Date().toISOString(),
+        },
+        {
+          scan_type: "finnhub",
+          status: !FINNHUB_API_KEY ? "skipped" : "success",
+          mentions_found: finnhubArticles.length,
+          error_message: !FINNHUB_API_KEY ? "Finnhub API key not configured" : null,
           completed_at: new Date().toISOString(),
         },
       ];
@@ -425,6 +517,7 @@ export const scanMentions = inngest.createFunction(
       twitter_mentions: twitterMentions.length,
       reddit_mentions: redditMentions.length,
       news_articles: newsArticles.length,
+      finnhub_articles: finnhubArticles.length,
       stored: stored.stored,
     };
   }
