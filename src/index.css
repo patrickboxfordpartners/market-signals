@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@config "../tailwind.config.js";
 
 /* Bloomberg-inspired dark finance theme */
 /* Light mode kept as fallback but dark is default */
