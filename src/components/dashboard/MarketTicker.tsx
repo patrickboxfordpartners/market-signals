@@ -1,106 +1,83 @@
-import { useEffect, useState } from 'react'
-import { TrendingUp, TrendingDown } from 'lucide-react'
-import { supabase } from '../../integrations/supabase/client'
+import { useEffect, useState, useRef } from 'react'
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 
-interface TickerData {
+interface Quote {
   symbol: string
-  mention_count: number
-  sentiment: number // -1 to +1
-  spike: boolean
+  price: number
+  change: number
+  changePercent: number
+  marketState?: string
 }
 
+const WORKER_URL = import.meta.env.VITE_WORKER_URL || 'https://worker-production-c529.up.railway.app'
+const REFRESH_INTERVAL = 60_000
+
 export function MarketTicker() {
-  const [tickers, setTickers] = useState<TickerData[]>([])
+  const [quotes, setQuotes] = useState<Quote[]>([])
+  const intervalRef = useRef<ReturnType<typeof setInterval>>()
 
   useEffect(() => {
-    fetchTickerData()
+    fetchQuotes()
+    intervalRef.current = setInterval(fetchQuotes, REFRESH_INTERVAL)
+    return () => clearInterval(intervalRef.current)
   }, [])
 
-  async function fetchTickerData() {
-    // Pull real tickers from the DB
-    const { data: tickerRows } = await supabase
-      .from('tickers')
-      .select('symbol, avg_daily_mentions')
-      .eq('is_active', true)
-      .order('avg_daily_mentions', { ascending: false })
-      .limit(20)
-
-    if (tickerRows && tickerRows.length > 0) {
-      // Get recent spikes
-      const today = new Date().toISOString().split('T')[0]
-      const { data: spikes } = await supabase
-        .from('mention_frequency')
-        .select('ticker_id, tickers(symbol)')
-        .eq('spike_detected', true)
-        .gte('date', today)
-
-      const spikeSymbols = new Set(
-        (spikes || []).map((s: any) => s.tickers?.symbol).filter(Boolean)
-      )
-
-      setTickers(
-        tickerRows.map((t) => ({
-          symbol: t.symbol,
-          mention_count: t.avg_daily_mentions,
-          sentiment: 0, // Neutral until we have prediction data
-          spike: spikeSymbols.has(t.symbol),
-        }))
-      )
-    } else {
-      // Fallback: show placeholder tickers so the bar isn't empty
-      const placeholders = ['NVDA', 'TSLA', 'AAPL', 'MSFT', 'GOOGL', 'META', 'AMD', 'PLTR']
-      setTickers(
-        placeholders.map((s) => ({
-          symbol: s,
-          mention_count: 0,
-          sentiment: 0,
-          spike: false,
-        }))
-      )
+  async function fetchQuotes() {
+    try {
+      const res = await fetch(`${WORKER_URL}/api/quotes`)
+      if (!res.ok) throw new Error(`${res.status}`)
+      const data: Quote[] = await res.json()
+      if (data.length > 0) setQuotes(data)
+    } catch {
+      // Silently fail — keep showing last known quotes
     }
   }
 
-  if (tickers.length === 0) return null
+  if (quotes.length === 0) {
+    return (
+      <div className="h-10 bg-card border-b flex items-center px-4">
+        <span className="text-xs text-muted-foreground font-mono">Loading quotes...</span>
+      </div>
+    )
+  }
 
-  const displayTickers = [...tickers, ...tickers, ...tickers]
+  // Triple the array for seamless scroll loop
+  const displayQuotes = [...quotes, ...quotes, ...quotes]
 
   return (
     <div className="relative h-10 bg-card border-b overflow-hidden">
       <div className="absolute inset-0 flex items-center">
-        <div className="flex gap-6 animate-ticker whitespace-nowrap px-4">
-          {displayTickers.map((ticker, index) => (
-            <div
-              key={`${ticker.symbol}-${index}`}
-              className="flex items-center gap-2"
-            >
-              <span className="text-xs font-bold text-foreground tracking-wide">
-                {ticker.symbol}
-              </span>
-              {ticker.spike && (
-                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              )}
-              <span className="text-xs font-mono text-muted-foreground">
-                {ticker.mention_count > 0
-                  ? `${ticker.mention_count}/d`
-                  : '--'}
-              </span>
-              {ticker.sentiment !== 0 && (
-                <span
-                  className={`flex items-center gap-0.5 text-xs font-mono ${
-                    ticker.sentiment > 0
-                      ? 'text-green-500'
-                      : 'text-red-500'
-                  }`}
-                >
-                  {ticker.sentiment > 0 ? (
-                    <TrendingUp className="h-2.5 w-2.5" />
-                  ) : (
-                    <TrendingDown className="h-2.5 w-2.5" />
-                  )}
+        <div className="flex gap-8 animate-ticker whitespace-nowrap px-4">
+          {displayQuotes.map((q, i) => {
+            const isUp = q.change > 0
+            const isDown = q.change < 0
+            const colorClass = isUp
+              ? 'text-green-500'
+              : isDown
+                ? 'text-red-500'
+                : 'text-muted-foreground'
+
+            return (
+              <div key={`${q.symbol}-${i}`} className="flex items-center gap-2">
+                <span className="text-xs font-bold text-foreground tracking-wide">
+                  {q.symbol}
                 </span>
-              )}
-            </div>
-          ))}
+                <span className="text-xs font-mono text-muted-foreground">
+                  {q.price.toFixed(2)}
+                </span>
+                <span className={`flex items-center gap-0.5 text-xs font-mono ${colorClass}`}>
+                  {isUp ? (
+                    <TrendingUp className="h-2.5 w-2.5" />
+                  ) : isDown ? (
+                    <TrendingDown className="h-2.5 w-2.5" />
+                  ) : (
+                    <Minus className="h-2.5 w-2.5" />
+                  )}
+                  {isUp ? '+' : ''}{q.changePercent.toFixed(2)}%
+                </span>
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>
