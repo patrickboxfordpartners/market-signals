@@ -10,11 +10,8 @@ interface StockPrice {
 }
 
 export const validatePredictions = inngest.createFunction(
-  {
-    id: "validate-predictions",
-    name: "Validate predictions against actual outcomes",
-    triggers: [{ cron: "0 21 * * *" }],
-  },
+  { id: "validate-predictions", name: "Validate predictions against actual outcomes" },
+  { cron: "0 21 * * *" },
   async ({ step }) => {
     const today = new Date();
 

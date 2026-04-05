@@ -18,11 +18,8 @@ interface ExtractionResult {
 }
 
 export const extractPredictions = inngest.createFunction(
-  {
-    id: "extract-predictions",
-    name: "Extract predictions from unprocessed mentions",
-    triggers: [{ cron: "0 * * * *" }, { event: "extract/predictions" }],
-  },
+  { id: "extract-predictions", name: "Extract predictions from unprocessed mentions" },
+  [{ cron: "0 * * * *" }, { event: "extract/predictions" }],
   async ({ event, step }) => {
     // Get unprocessed mentions (limit batch size to avoid timeout)
     const unprocessedMentions = await step.run("fetch-unprocessed-mentions", async () => {
