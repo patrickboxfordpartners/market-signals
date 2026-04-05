@@ -1,58 +1,82 @@
+import { useState } from 'react'
 import { Outlet, NavLink } from 'react-router-dom'
 import {
   LayoutDashboard,
   Users,
   TrendingUp,
   Target,
-  Activity
+  Activity,
+  Radio,
+  Menu,
+  X,
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { MarketTicker } from './MarketTicker'
+import { ErrorBoundary } from '../ErrorBoundary'
 
 const navigation = [
   { name: 'Overview', href: '/', icon: LayoutDashboard },
-  { name: 'Sources', href: '/sources', icon: Users },
+  { name: 'Live Signals', href: '/signals', icon: Radio },
   { name: 'Tickers', href: '/tickers', icon: TrendingUp },
   { name: 'Predictions', href: '/predictions', icon: Target },
-  { name: 'Live Signals', href: '/signals', icon: Activity },
+  { name: 'Sources', href: '/sources', icon: Users },
 ]
 
 export function DashboardLayout() {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="min-h-screen bg-background">
+      {/* Mobile backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <div className="fixed inset-y-0 left-0 z-50 w-64 bg-card border-r shadow-xl">
+      <div
+        className={cn(
+          'fixed inset-y-0 left-0 z-50 w-60 bg-card border-r flex flex-col transition-transform duration-200 lg:translate-x-0',
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        )}
+      >
         {/* Logo */}
-        <div className="relative h-16 overflow-hidden border-b">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-blue-500 to-purple-600 opacity-90" />
-          <div className="relative flex h-full items-center px-6">
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center ring-2 ring-white/30">
-                <Activity className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-white">Market Signals</h1>
-                <p className="text-[10px] text-white/80 font-medium">
-                  Credibility-Weighted Analysis
-                </p>
-              </div>
+        <div className="h-14 flex items-center justify-between px-5 border-b">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center border border-primary/20">
+              <Activity className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-sm font-bold tracking-tight">MARKET SIGNALS</h1>
+              <p className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase">
+                Boxford Partners
+              </p>
             </div>
           </div>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="p-1 rounded-md hover:bg-accent lg:hidden"
+          >
+            <X className="h-4 w-4 text-muted-foreground" />
+          </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-1 px-3 py-4">
+        <nav className="flex-1 px-3 py-3 space-y-0.5">
           {navigation.map((item) => (
             <NavLink
               key={item.name}
               to={item.href}
               end={item.href === '/'}
+              onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                  'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
                   isActive
-                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
-                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground hover:translate-x-0.5'
+                    ? 'bg-primary/10 text-primary border border-primary/20'
+                    : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                 )
               }
             >
@@ -63,26 +87,35 @@ export function DashboardLayout() {
         </nav>
 
         {/* Footer */}
-        <div className="border-t p-4 bg-gradient-to-br from-muted/30 to-muted/10">
-          <div className="text-xs text-muted-foreground">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="h-6 w-6 rounded bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                <Activity className="h-3 w-3 text-white" />
-              </div>
-              <span className="font-semibold">Market Signals</span>
-            </div>
-            <div className="text-[10px] opacity-70 pl-8">
-              Boxford Partners © 2026
-            </div>
+        <div className="border-t px-5 py-3">
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse-glow" />
+            <span className="text-xs text-muted-foreground">System Online</span>
           </div>
         </div>
       </div>
 
       {/* Main content */}
-      <div className="pl-64">
+      <div className="lg:pl-60">
+        {/* Mobile header */}
+        <div className="sticky top-0 z-30 flex items-center h-14 px-4 border-b bg-card lg:hidden">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-1.5 rounded-md hover:bg-accent mr-3"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <div className="flex items-center gap-2">
+            <Activity className="h-4 w-4 text-primary" />
+            <span className="text-sm font-bold tracking-tight">MARKET SIGNALS</span>
+          </div>
+        </div>
+
         <MarketTicker />
-        <main className="p-8">
-          <Outlet />
+        <main className="p-4 sm:p-6">
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
     </div>

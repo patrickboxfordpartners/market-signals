@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../integrations/supabase/client'
-import { TrendingUp, Users, FileText, CheckCircle, Activity } from 'lucide-react'
+import { TrendingUp, Users, FileText, CheckCircle, Activity, Radio } from 'lucide-react'
 import { formatNumber, formatDateTime } from '../lib/utils'
 import { SystemStatus } from '../components/dashboard/SystemStatus'
 import { TopMovers } from '../components/dashboard/TopMovers'
@@ -37,7 +37,6 @@ export function Overview() {
     fetchStats()
     fetchRecentMentions()
 
-    // Real-time subscription for new mentions
     const subscription = supabase
       .channel('mentions-changes')
       .on(
@@ -100,7 +99,6 @@ export function Overview() {
         }))
       )
 
-      // Set last scan time from most recent mention
       if (data.length > 0) {
         setLastScanTime(data[0].mentioned_at)
       }
@@ -110,97 +108,96 @@ export function Overview() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Activity className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Activity className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     )
   }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">Overview</h1>
-        <p className="text-muted-foreground mt-1">
-          System health and recent activity
-        </p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Overview</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            System health and recent activity
+          </p>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Radio className="h-3 w-3 text-green-500" />
+          <span>Live</span>
+        </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard
-          title="Total Mentions"
-          value={formatNumber(stats.totalMentions)}
-          icon={<FileText className="h-5 w-5" />}
-          description="Captured from all sources"
-          gradient="from-blue-500 to-blue-600"
+          title="Mentions"
+          value={stats.totalMentions}
+          icon={<FileText className="h-4 w-4" />}
+          label="total captured"
         />
         <StatCard
-          title="Sources Tracked"
-          value={formatNumber(stats.totalSources)}
-          icon={<Users className="h-5 w-5" />}
-          description="Unique analysts & publications"
-          gradient="from-purple-500 to-purple-600"
+          title="Sources"
+          value={stats.totalSources}
+          icon={<Users className="h-4 w-4" />}
+          label="tracked"
         />
         <StatCard
-          title="Active Predictions"
-          value={formatNumber(stats.activePredictions)}
-          icon={<TrendingUp className="h-5 w-5" />}
-          description="Awaiting validation"
-          gradient="from-green-500 to-green-600"
+          title="Predictions"
+          value={stats.activePredictions}
+          icon={<TrendingUp className="h-4 w-4" />}
+          label="active"
         />
         <StatCard
           title="Validated"
-          value={formatNumber(stats.validatedPredictions)}
-          icon={<CheckCircle className="h-5 w-5" />}
-          description="Historical track record"
-          gradient="from-orange-500 to-orange-600"
+          value={stats.validatedPredictions}
+          icon={<CheckCircle className="h-4 w-4" />}
+          label="outcomes"
         />
       </div>
 
       {/* System Widgets */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <SystemStatus lastScanTime={lastScanTime} />
         <TopMovers />
         <ActivityTimeline />
       </div>
 
-      {/* Recent Activity */}
-      <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
-        <div className="p-6 border-b bg-gradient-to-r from-muted/30 to-muted/10">
-          <h2 className="text-lg font-semibold">Recent Mentions</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Live feed of captured mentions
-          </p>
+      {/* Recent Mentions */}
+      <div className="bg-card rounded-lg border overflow-hidden">
+        <div className="px-4 py-3 border-b flex items-center justify-between">
+          <h2 className="text-sm font-semibold">Recent Mentions</h2>
+          <span className="text-xs text-muted-foreground">Live feed</span>
         </div>
-        <div className="divide-y">
+        <div className="divide-y divide-border">
           {recentMentions.length === 0 ? (
-            <div className="p-12 text-center text-muted-foreground">
-              <div className="inline-flex p-4 rounded-full bg-muted/50 mb-4">
-                <FileText className="h-12 w-12 opacity-50" />
-              </div>
-              <p className="text-sm">No mentions yet. The scanner will capture data every 15 minutes.</p>
+            <div className="p-8 text-center text-muted-foreground">
+              <FileText className="h-8 w-8 mx-auto mb-2 opacity-30" />
+              <p className="text-sm">No mentions yet.</p>
+              <p className="text-xs mt-1">The scanner runs every 15 minutes once API keys are configured.</p>
             </div>
           ) : (
             recentMentions.map((mention) => (
-              <div key={mention.id} className="p-4 hover:bg-accent/30 transition-all duration-200">
-                <div className="flex items-start justify-between gap-4">
+              <div key={mention.id} className="px-4 py-3 hover:bg-accent/50 transition-colors">
+                <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">
+                      <span className="text-xs font-mono font-bold text-primary">
                         ${mention.ticker_symbol}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         {mention.source_name}
                       </span>
-                      <span className="text-xs text-muted-foreground">•</span>
-                      <span className="text-xs text-muted-foreground capitalize">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent text-muted-foreground uppercase tracking-wider">
                         {mention.platform}
                       </span>
                     </div>
-                    <p className="text-sm text-foreground line-clamp-2">
+                    <p className="text-sm text-foreground/80 line-clamp-2 leading-relaxed">
                       {mention.content}
                     </p>
                   </div>
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  <span className="text-[10px] font-mono text-muted-foreground whitespace-nowrap">
                     {formatDateTime(mention.mentioned_at)}
                   </span>
                 </div>
@@ -217,28 +214,25 @@ function StatCard({
   title,
   value,
   icon,
-  description,
-  gradient,
+  label,
 }: {
   title: string
-  value: string
+  value: number
   icon: React.ReactNode
-  description: string
-  gradient: string
+  label: string
 }) {
   return (
-    <div className="relative overflow-hidden bg-card rounded-xl border hover:shadow-lg transition-all duration-300 group">
-      <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-5 group-hover:opacity-10 transition-opacity`} />
-      <div className="relative p-6">
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-sm font-medium text-muted-foreground">{title}</span>
-          <div className={`p-2.5 rounded-lg bg-gradient-to-br ${gradient}`}>
-            <div className="text-white">{icon}</div>
-          </div>
-        </div>
-        <div className="text-3xl font-bold mb-1">{value}</div>
-        <p className="text-xs text-muted-foreground">{description}</p>
+    <div className="bg-card rounded-lg border p-4 card-glow">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          {title}
+        </span>
+        <div className="text-muted-foreground">{icon}</div>
       </div>
+      <div className="text-2xl font-bold font-mono tracking-tight">
+        {formatNumber(value)}
+      </div>
+      <p className="text-[10px] text-muted-foreground mt-0.5">{label}</p>
     </div>
   )
 }

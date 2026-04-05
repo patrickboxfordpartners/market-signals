@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../integrations/supabase/client'
-import { Activity, TrendingUp, TrendingDown, Minus, CheckCircle, Clock } from 'lucide-react'
+import { Activity, TrendingUp, TrendingDown, Minus, CheckCircle, XCircle, Clock, Target } from 'lucide-react'
 import { formatDateTime } from '../lib/utils'
 
 interface Prediction {
@@ -12,7 +12,6 @@ interface Prediction {
   price_target: number | null
   confidence_level: 'low' | 'medium' | 'high' | null
   reasoning_quality_score: number | null
-  data_discipline_score: number | null
   prediction_date: string
   target_date: string | null
   validated: boolean
@@ -30,7 +29,7 @@ export function PredictionsTracker() {
   }, [filter])
 
   async function fetchPredictions() {
-    let query = supabase
+    const { data } = await supabase
       .from('predictions')
       .select(
         `
@@ -39,7 +38,6 @@ export function PredictionsTracker() {
         price_target,
         confidence_level,
         reasoning_quality_score,
-        data_discipline_score,
         prediction_date,
         target_date,
         tickers (symbol),
@@ -49,8 +47,6 @@ export function PredictionsTracker() {
       )
       .order('prediction_date', { ascending: false })
       .limit(100)
-
-    const { data } = await query
 
     if (data) {
       const formatted = data.map((p: any) => ({
@@ -62,7 +58,6 @@ export function PredictionsTracker() {
         price_target: p.price_target,
         confidence_level: p.confidence_level,
         reasoning_quality_score: p.reasoning_quality_score,
-        data_discipline_score: p.data_discipline_score,
         prediction_date: p.prediction_date,
         target_date: p.target_date,
         validated: !!p.validations,
@@ -82,10 +77,16 @@ export function PredictionsTracker() {
     setLoading(false)
   }
 
+  const filterOptions = [
+    { key: 'all' as const, label: 'All' },
+    { key: 'pending' as const, label: 'Pending' },
+    { key: 'validated' as const, label: 'Validated' },
+  ]
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Activity className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Activity className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     )
   }
@@ -94,156 +95,145 @@ export function PredictionsTracker() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Predictions Tracker</h1>
-          <p className="text-muted-foreground mt-1">
-            Monitor predictions and validation outcomes
+          <h1 className="text-2xl font-bold tracking-tight">Predictions</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Track predictions and validation outcomes
           </p>
         </div>
 
-        <div className="flex gap-2">
-          <button
-            onClick={() => setFilter('all')}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
-              filter === 'all'
-                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
-                : 'bg-card border hover:bg-accent hover:shadow'
-            }`}
-          >
-            All
-          </button>
-          <button
-            onClick={() => setFilter('pending')}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
-              filter === 'pending'
-                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
-                : 'bg-card border hover:bg-accent hover:shadow'
-            }`}
-          >
-            Pending
-          </button>
-          <button
-            onClick={() => setFilter('validated')}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
-              filter === 'validated'
-                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
-                : 'bg-card border hover:bg-accent hover:shadow'
-            }`}
-          >
-            Validated
-          </button>
+        <div className="flex gap-1 bg-accent/50 rounded-md p-0.5 border">
+          {filterOptions.map((opt) => (
+            <button
+              key={opt.key}
+              onClick={() => setFilter(opt.key)}
+              className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                filter === opt.key
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
       </div>
 
       {predictions.length === 0 ? (
-        <div className="bg-gradient-to-br from-card to-muted/20 rounded-xl border p-12 text-center">
-          <div className="inline-flex p-4 rounded-full bg-muted/50 mb-4">
-            <Clock className="h-12 w-12 text-muted-foreground opacity-50" />
-          </div>
-          <h3 className="text-lg font-semibold mb-2">No Predictions Yet</h3>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            Predictions will appear once mentions are analyzed by the extraction worker
+        <div className="bg-card rounded-lg border p-12 text-center">
+          <Target className="h-8 w-8 mx-auto mb-3 text-muted-foreground opacity-30" />
+          <h3 className="text-sm font-semibold mb-1">No Predictions Yet</h3>
+          <p className="text-xs text-muted-foreground">
+            Predictions appear once mentions are analyzed by the extraction worker
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {predictions.map((prediction) => (
-            <div
-              key={prediction.id}
-              className="bg-card rounded-xl border p-5 hover:shadow-lg hover:border-primary/20 transition-all duration-300"
-            >
-              <div className="flex items-start justify-between gap-4">
-                {/* Left Side */}
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">
-                      ${prediction.ticker_symbol}
-                    </span>
-                    <span
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
-                        prediction.sentiment === 'bullish'
-                          ? 'bg-green-100 text-green-800'
-                          : prediction.sentiment === 'bearish'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {prediction.sentiment === 'bullish' && <TrendingUp className="h-3 w-3" />}
-                      {prediction.sentiment === 'bearish' && <TrendingDown className="h-3 w-3" />}
-                      {prediction.sentiment === 'neutral' && <Minus className="h-3 w-3" />}
-                      {prediction.sentiment}
-                    </span>
-                    {prediction.price_target && (
-                      <span className="text-xs text-muted-foreground">
-                        Target: ${prediction.price_target}
-                      </span>
-                    )}
-                    {prediction.confidence_level && (
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                          prediction.confidence_level === 'high'
-                            ? 'bg-blue-100 text-blue-800'
-                            : prediction.confidence_level === 'medium'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {prediction.confidence_level} confidence
-                      </span>
-                    )}
-                  </div>
+        <div className="space-y-2">
+          {predictions.map((prediction) => {
+            const sentimentConfig = {
+              bullish: { icon: TrendingUp, color: 'text-green-500', bg: 'bg-green-500/10', border: 'border-green-500/20' },
+              bearish: { icon: TrendingDown, color: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/20' },
+              neutral: { icon: Minus, color: 'text-muted-foreground', bg: 'bg-accent', border: 'border-border' },
+            }
+            const config = sentimentConfig[prediction.sentiment]
+            const Icon = config.icon
 
-                  <div className="flex items-center gap-4 text-sm">
-                    <span className="text-muted-foreground">{prediction.source_name}</span>
-                    <span className="text-muted-foreground">•</span>
-                    <span className="text-muted-foreground">
-                      Credibility: {prediction.source_credibility.toFixed(1)}
-                    </span>
-                    {prediction.reasoning_quality_score !== null && (
-                      <>
-                        <span className="text-muted-foreground">•</span>
-                        <span className="text-muted-foreground">
-                          Reasoning: {(prediction.reasoning_quality_score * 100).toFixed(0)}%
+            return (
+              <div
+                key={prediction.id}
+                className="bg-card rounded-lg border p-4 card-glow"
+              >
+                <div className="flex items-center justify-between gap-4">
+                  {/* Left side */}
+                  <div className="flex items-center gap-3 min-w-0">
+                    {/* Sentiment icon */}
+                    <div className={`p-1.5 rounded ${config.bg} border ${config.border}`}>
+                      <Icon className={`h-3.5 w-3.5 ${config.color}`} />
+                    </div>
+
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-bold font-mono text-primary">
+                          ${prediction.ticker_symbol}
                         </span>
-                      </>
-                    )}
-                  </div>
-
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    Made {formatDateTime(prediction.prediction_date)}
-                    {prediction.target_date && ` • Target: ${formatDateTime(prediction.target_date)}`}
-                  </div>
-                </div>
-
-                {/* Right Side - Validation Status */}
-                <div className="text-right">
-                  {prediction.validated ? (
-                    <div>
-                      <div
-                        className={`inline-flex items-center gap-1 px-2 py-1 rounded text-sm font-medium ${
-                          prediction.was_correct
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}
-                      >
-                        <CheckCircle className="h-3 w-3" />
-                        {prediction.was_correct ? 'Correct' : 'Incorrect'}
+                        <span className={`text-[10px] font-medium uppercase tracking-wider ${config.color}`}>
+                          {prediction.sentiment}
+                        </span>
+                        {prediction.price_target && (
+                          <span className="text-[10px] font-mono text-muted-foreground">
+                            PT ${prediction.price_target}
+                          </span>
+                        )}
+                        {prediction.confidence_level && (
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded border ${
+                            prediction.confidence_level === 'high'
+                              ? 'border-primary/30 text-primary bg-primary/5'
+                              : prediction.confidence_level === 'medium'
+                              ? 'border-border text-muted-foreground bg-accent/50'
+                              : 'border-border text-muted-foreground bg-accent/30'
+                          }`}>
+                            {prediction.confidence_level}
+                          </span>
+                        )}
                       </div>
-                      {prediction.accuracy_score !== null && (
-                        <div className="text-xs text-muted-foreground mt-1">
-                          Score: {prediction.accuracy_score.toFixed(1)}/100
+
+                      <div className="flex items-center gap-3 mt-1 text-[10px] text-muted-foreground">
+                        <span>{prediction.source_name}</span>
+                        <span className="font-mono">
+                          cred {prediction.source_credibility.toFixed(0)}
+                        </span>
+                        {prediction.reasoning_quality_score !== null && (
+                          <span className="font-mono">
+                            reasoning {(prediction.reasoning_quality_score * 100).toFixed(0)}%
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right side — dates + validation */}
+                  <div className="flex items-center gap-4 shrink-0">
+                    <div className="text-right hidden sm:block">
+                      <div className="text-[10px] font-mono text-muted-foreground">
+                        {formatDateTime(prediction.prediction_date)}
+                      </div>
+                      {prediction.target_date && (
+                        <div className="text-[10px] font-mono text-muted-foreground">
+                          target {formatDateTime(prediction.target_date)}
                         </div>
                       )}
                     </div>
-                  ) : (
-                    <div className="inline-flex items-center gap-1 px-2 py-1 rounded text-sm font-medium bg-yellow-100 text-yellow-800">
-                      <Clock className="h-3 w-3" />
-                      Pending
-                    </div>
-                  )}
+
+                    {/* Validation badge */}
+                    {prediction.validated ? (
+                      <div className={`flex items-center gap-1 px-2 py-1 rounded border text-xs font-medium ${
+                        prediction.was_correct
+                          ? 'bg-green-500/10 border-green-500/20 text-green-500'
+                          : 'bg-red-500/10 border-red-500/20 text-red-500'
+                      }`}>
+                        {prediction.was_correct ? (
+                          <CheckCircle className="h-3 w-3" />
+                        ) : (
+                          <XCircle className="h-3 w-3" />
+                        )}
+                        <span className="font-mono">
+                          {prediction.accuracy_score !== null
+                            ? prediction.accuracy_score.toFixed(0)
+                            : prediction.was_correct
+                            ? 'OK'
+                            : 'X'}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1 px-2 py-1 rounded border border-border bg-accent/30 text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        <span>Pending</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>

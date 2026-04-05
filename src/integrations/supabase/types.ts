@@ -273,6 +273,36 @@ export interface Database {
         }
         Relationships: []
       }
+      scan_log: {
+        Row: {
+          id: string
+          scan_type: string
+          status: string
+          mentions_found: number
+          error_message: string | null
+          started_at: string
+          completed_at: string | null
+        }
+        Insert: {
+          id?: string
+          scan_type: string
+          status: string
+          mentions_found?: number
+          error_message?: string | null
+          started_at?: string
+          completed_at?: string | null
+        }
+        Update: {
+          id?: string
+          scan_type?: string
+          status?: string
+          mentions_found?: number
+          error_message?: string | null
+          started_at?: string
+          completed_at?: string | null
+        }
+        Relationships: []
+      }
       mention_frequency: {
         Row: {
           id: string

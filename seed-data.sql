@@ -130,7 +130,6 @@ SELECT
   s.total_predictions,
   s.correct_predictions,
   s.reasoning_quality,
-  s.data_discipline_score as data_discipline,
   s.transparency_score as transparency,
   s.verified,
   s.updated_at

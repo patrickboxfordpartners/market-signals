@@ -1,7 +1,7 @@
 import { inngest } from "../client.js";
 import { supabase } from "../../integrations/supabase/client.js";
 
-const ALPHA_VANTAGE_API_KEY = process.env.VITE_ALPHA_VANTAGE_API_KEY;
+const ALPHA_VANTAGE_API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
 
 interface StockPrice {
   symbol: string;
@@ -40,7 +40,6 @@ export const validatePredictions = inngest.createFunction(
 
       if (error) throw error;
 
-      // Fetch ticker symbols for these predictions
       if (!data || data.length === 0) return [];
       const tickerIds = [...new Set(data.map(p => p.ticker_id))];
       const { data: tickers } = await supabase.from("tickers").select("id, symbol").in("id", tickerIds);
@@ -57,59 +56,97 @@ export const validatePredictions = inngest.createFunction(
     }
 
     // Get unique ticker symbols
-    const symbols = [...new Set(predictionsToValidate.map(p => p.ticker_symbol))];
+    const symbols = [...new Set(predictionsToValidate.map(p => p.ticker_symbol))].filter(
+      s => s !== "UNKNOWN"
+    );
 
-    // Fetch current prices for all symbols
-    const currentPrices = await step.run("fetch-current-prices", async () => {
-      const prices: Record<string, StockPrice> = {};
+    // Fetch current prices — process in chunks of 5 to respect Alpha Vantage rate limits
+    // Free tier: 5 requests per minute, 25 per day
+    const currentPrices: Record<string, StockPrice> = {};
 
-      for (const symbol of symbols) {
-        try {
-          const price = await fetchStockPrice(symbol);
-          prices[symbol] = price;
+    // Split symbols into chunks of 5
+    const symbolChunks: string[][] = [];
+    for (let i = 0; i < symbols.length; i += 5) {
+      symbolChunks.push(symbols.slice(i, i + 5));
+    }
 
-          // Alpha Vantage free tier: 5 requests per minute
-          await new Promise(resolve => setTimeout(resolve, 12000));
-        } catch (error) {
-          console.error(`Error fetching price for ${symbol}:`, error);
-        }
-      }
+    for (let chunkIdx = 0; chunkIdx < symbolChunks.length; chunkIdx++) {
+      const chunk = symbolChunks[chunkIdx];
+      const chunkPrices = await step.run(`fetch-prices-chunk-${chunkIdx}`, async () => {
+        const prices: Record<string, StockPrice> = {};
 
-      return prices;
-    });
-
-    // Fetch historical prices at prediction date
-    const historicalPrices = await step.run("fetch-historical-prices", async () => {
-      const prices: Record<string, Record<string, number>> = {};
-
-      for (const prediction of predictionsToValidate) {
-        const symbol = prediction.ticker_symbol;
-        const predictionDate = new Date(prediction.prediction_date)
-          .toISOString()
-          .split("T")[0];
-
-        if (!prices[symbol]) {
-          prices[symbol] = {};
-        }
-
-        if (!prices[symbol][predictionDate]) {
+        for (const symbol of chunk) {
           try {
-            const price = await fetchHistoricalPrice(symbol, predictionDate);
-            prices[symbol][predictionDate] = price;
+            const price = await fetchStockPrice(symbol);
+            prices[symbol] = price;
 
-            // Rate limit
-            await new Promise(resolve => setTimeout(resolve, 12000));
+            // Alpha Vantage free tier: 5 requests per minute
+            await new Promise(resolve => setTimeout(resolve, 12500));
           } catch (error) {
-            console.error(
-              `Error fetching historical price for ${symbol} on ${predictionDate}:`,
-              error
-            );
+            console.error(`Error fetching price for ${symbol}:`, error);
           }
         }
-      }
 
-      return prices;
-    });
+        return prices;
+      });
+
+      Object.assign(currentPrices, chunkPrices);
+    }
+
+    // Fetch historical prices — also chunked
+    // Collect unique (symbol, date) pairs to minimize API calls
+    const historicalNeeded = new Map<string, Set<string>>();
+    for (const prediction of predictionsToValidate) {
+      const symbol = prediction.ticker_symbol;
+      if (symbol === "UNKNOWN") continue;
+      const predictionDate = new Date(prediction.prediction_date).toISOString().split("T")[0];
+      if (!historicalNeeded.has(symbol)) {
+        historicalNeeded.set(symbol, new Set());
+      }
+      historicalNeeded.get(symbol)!.add(predictionDate);
+    }
+
+    const historicalPrices: Record<string, Record<string, number>> = {};
+
+    // Each TIME_SERIES_DAILY call returns 100 days of data for a symbol,
+    // so we only need one call per symbol (not per date)
+    const histSymbols = [...historicalNeeded.keys()];
+    const histChunks: string[][] = [];
+    for (let i = 0; i < histSymbols.length; i += 5) {
+      histChunks.push(histSymbols.slice(i, i + 5));
+    }
+
+    for (let chunkIdx = 0; chunkIdx < histChunks.length; chunkIdx++) {
+      const chunk = histChunks[chunkIdx];
+      const chunkPrices = await step.run(`fetch-historical-chunk-${chunkIdx}`, async () => {
+        const prices: Record<string, Record<string, number>> = {};
+
+        for (const symbol of chunk) {
+          try {
+            const timeSeries = await fetchDailyTimeSeries(symbol);
+            prices[symbol] = {};
+
+            const datesNeeded = historicalNeeded.get(symbol)!;
+            for (const date of datesNeeded) {
+              if (timeSeries[date]) {
+                prices[symbol][date] = parseFloat(timeSeries[date]["4. close"]);
+              }
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 12500));
+          } catch (error) {
+            console.error(`Error fetching historical data for ${symbol}:`, error);
+          }
+        }
+
+        return prices;
+      });
+
+      // Merge
+      for (const [symbol, dates] of Object.entries(chunkPrices)) {
+        historicalPrices[symbol] = { ...historicalPrices[symbol], ...dates };
+      }
+    }
 
     // Validate each prediction
     const validated = await step.run("validate-and-store", async () => {
@@ -129,11 +166,9 @@ export const validatePredictions = inngest.createFunction(
           continue;
         }
 
-        // Calculate outcome
         const priceChangePercent =
           ((currentPrice - priceAtPrediction) / priceAtPrediction) * 100;
 
-        // Determine if prediction was correct
         let wasCorrect = false;
         let accuracyScore = 0;
 
@@ -144,19 +179,16 @@ export const validatePredictions = inngest.createFunction(
           wasCorrect = priceChangePercent < 0;
           accuracyScore = Math.min(100, Math.max(0, 50 + Math.abs(priceChangePercent) * 5));
         } else {
-          // Neutral prediction
           wasCorrect = Math.abs(priceChangePercent) < 5;
           accuracyScore = Math.max(0, 100 - Math.abs(priceChangePercent) * 10);
         }
 
-        // If price target was specified, factor that into accuracy
         if (prediction.price_target) {
           const targetAccuracy =
             100 - Math.abs(((currentPrice - prediction.price_target) / prediction.price_target) * 100);
           accuracyScore = (accuracyScore + Math.max(0, targetAccuracy)) / 2;
         }
 
-        // Calculate days to outcome
         const targetDate = prediction.target_date || prediction.prediction_date;
         const daysToOutcome = Math.round(
           (new Date(targetDate).getTime() -
@@ -164,7 +196,6 @@ export const validatePredictions = inngest.createFunction(
             (1000 * 60 * 60 * 24)
         );
 
-        // Store validation
         const { error } = await supabase.from("validations").insert({
           prediction_id: prediction.id,
           price_at_prediction: priceAtPrediction,
@@ -180,8 +211,6 @@ export const validatePredictions = inngest.createFunction(
         if (!error) {
           validationCount++;
         }
-
-        // The trigger will automatically update source credibility
       }
 
       return { validated: validationCount };
@@ -226,8 +255,10 @@ async function fetchStockPrice(symbol: string): Promise<StockPrice> {
   };
 }
 
-// Fetch historical price for a specific date
-async function fetchHistoricalPrice(symbol: string, date: string): Promise<number> {
+// Fetch full daily time series (returns ~100 days of data in one call)
+async function fetchDailyTimeSeries(
+  symbol: string
+): Promise<Record<string, Record<string, string>>> {
   if (!ALPHA_VANTAGE_API_KEY) {
     throw new Error("Alpha Vantage API key not configured");
   }
@@ -247,9 +278,9 @@ async function fetchHistoricalPrice(symbol: string, date: string): Promise<numbe
   }
 
   const timeSeries = data["Time Series (Daily)"];
-  if (!timeSeries || !timeSeries[date]) {
-    throw new Error(`No price data for ${symbol} on ${date}`);
+  if (!timeSeries) {
+    throw new Error(`No time series data for ${symbol}`);
   }
 
-  return parseFloat(timeSeries[date]["4. close"]);
+  return timeSeries;
 }

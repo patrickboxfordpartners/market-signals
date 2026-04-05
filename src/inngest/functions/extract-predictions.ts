@@ -1,7 +1,7 @@
 import { inngest } from "../client.js";
 import { supabase } from "../../integrations/supabase/client.js";
 
-const XAI_API_KEY = process.env.VITE_XAI_API_KEY;
+const XAI_API_KEY = process.env.XAI_API_KEY;
 
 interface ExtractionResult {
   is_prediction: boolean;

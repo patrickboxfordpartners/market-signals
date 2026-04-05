@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "worker": "tsx worker.ts",
-    "worker:dev": "INNGEST_DEV=true tsx worker.ts"
+    "worker:dev": "INNGEST_DEV=true tsx worker.ts",
+    "inngest:dev": "npx inngest-cli dev -u http://localhost:3001/api/inngest",
+    "start:all": "echo 'Run these in separate terminals:\n  npm run dev          (frontend on :5173)\n  npm run worker:dev   (worker on :3001)\n  npm run inngest:dev  (inngest dashboard on :8288)'"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.4",

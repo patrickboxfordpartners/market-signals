@@ -75,7 +75,10 @@ CREATE TABLE mentions (
   is_prediction BOOLEAN DEFAULT false, -- Does this contain a price target/timeframe?
   processed BOOLEAN DEFAULT false, -- Has this been analyzed for sentiment?
 
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+
+  -- Deduplicate: same ticker + platform + url = same mention
+  UNIQUE(ticker_id, platform, url)
 );
 
 -- Predictions: Structured predictions extracted from mentions
@@ -143,6 +146,17 @@ CREATE TABLE mention_frequency (
   created_at TIMESTAMPTZ DEFAULT NOW(),
 
   UNIQUE(ticker_id, date)
+);
+
+-- Scan log: track scan outcomes for gap detection
+CREATE TABLE scan_log (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  scan_type TEXT NOT NULL, -- 'twitter', 'reddit', 'news'
+  status TEXT NOT NULL, -- 'success', 'error', 'skipped'
+  mentions_found INTEGER DEFAULT 0,
+  error_message TEXT,
+  started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  completed_at TIMESTAMPTZ
 );
 
 -- =============================================================================

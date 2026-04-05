@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../integrations/supabase/client'
-import { Activity, TrendingUp, TrendingDown, Award } from 'lucide-react'
+import { Activity, TrendingUp, TrendingDown, Award, Users } from 'lucide-react'
 import { formatPercent } from '../lib/utils'
 
 interface Source {
@@ -48,10 +48,16 @@ export function SourceLeaderboard() {
     setLoading(false)
   }
 
+  const sortOptions = [
+    { key: 'credibility' as const, label: 'Credibility' },
+    { key: 'accuracy' as const, label: 'Accuracy' },
+    { key: 'volume' as const, label: 'Volume' },
+  ]
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Activity className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Activity className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     )
   }
@@ -60,155 +66,136 @@ export function SourceLeaderboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Source Leaderboard</h1>
-          <p className="text-muted-foreground mt-1">
-            Ranked by credibility score and track record
+          <h1 className="text-2xl font-bold tracking-tight">Source Leaderboard</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Ranked by track record and reasoning quality
           </p>
         </div>
 
-        {/* Sort Options */}
-        <div className="flex gap-2">
-          <button
-            onClick={() => setSortBy('credibility')}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
-              sortBy === 'credibility'
-                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
-                : 'bg-card border hover:bg-accent hover:shadow'
-            }`}
-          >
-            Credibility
-          </button>
-          <button
-            onClick={() => setSortBy('accuracy')}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
-              sortBy === 'accuracy'
-                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
-                : 'bg-card border hover:bg-accent hover:shadow'
-            }`}
-          >
-            Accuracy
-          </button>
-          <button
-            onClick={() => setSortBy('volume')}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
-              sortBy === 'volume'
-                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
-                : 'bg-card border hover:bg-accent hover:shadow'
-            }`}
-          >
-            Volume
-          </button>
+        <div className="flex gap-1 bg-accent/50 rounded-md p-0.5 border">
+          {sortOptions.map((opt) => (
+            <button
+              key={opt.key}
+              onClick={() => setSortBy(opt.key)}
+              className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                sortBy === opt.key
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
       </div>
 
       {sources.length === 0 ? (
-        <div className="bg-gradient-to-br from-card to-muted/20 rounded-xl border p-12 text-center">
-          <div className="inline-flex p-4 rounded-full bg-muted/50 mb-4">
-            <Award className="h-12 w-12 text-muted-foreground opacity-50" />
-          </div>
-          <h3 className="text-lg font-semibold mb-2">No Sources Yet</h3>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            Sources will appear once predictions are validated
+        <div className="bg-card rounded-lg border p-12 text-center">
+          <Users className="h-8 w-8 mx-auto mb-3 text-muted-foreground opacity-30" />
+          <h3 className="text-sm font-semibold mb-1">No Sources Yet</h3>
+          <p className="text-xs text-muted-foreground">
+            Sources appear once predictions are validated
           </p>
         </div>
       ) : (
-        <div className="bg-card rounded-xl border overflow-hidden shadow-sm">
-          <table className="w-full">
-            <thead className="bg-gradient-to-r from-muted/50 to-muted/30">
-              <tr>
-                <th className="text-left py-3 px-4 text-sm font-medium">Rank</th>
-                <th className="text-left py-3 px-4 text-sm font-medium">Source</th>
-                <th className="text-left py-3 px-4 text-sm font-medium">Platform</th>
-                <th className="text-right py-3 px-4 text-sm font-medium">Credibility</th>
-                <th className="text-right py-3 px-4 text-sm font-medium">Accuracy</th>
-                <th className="text-right py-3 px-4 text-sm font-medium">Predictions</th>
-                <th className="text-right py-3 px-4 text-sm font-medium">Reasoning</th>
-                <th className="text-right py-3 px-4 text-sm font-medium">Transparency</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {sources.map((source, index) => (
-                <tr key={source.id} className="hover:bg-accent/30 transition-all duration-200">
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-2">
-                      {index < 3 && (
-                        <Award
-                          className={`h-4 w-4 ${
-                            index === 0
-                              ? 'text-yellow-500'
-                              : index === 1
-                              ? 'text-gray-400'
-                              : 'text-amber-600'
-                          }`}
-                        />
-                      )}
-                      <span className="text-sm font-medium">#{index + 1}</span>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">{source.name}</span>
-                      {source.verified && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                          ✓
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-xs text-muted-foreground capitalize">
-                      {source.source_type}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className="text-sm capitalize">{source.platform}</span>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <span className="text-sm font-medium">
-                        {source.credibility_score.toFixed(1)}
-                      </span>
-                      {source.credibility_score >= 70 ? (
-                        <TrendingUp className="h-3 w-3 text-green-500" />
-                      ) : source.credibility_score >= 50 ? (
-                        <Activity className="h-3 w-3 text-yellow-500" />
-                      ) : (
-                        <TrendingDown className="h-3 w-3 text-red-500" />
-                      )}
-                    </div>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <span className="text-sm">{formatPercent(source.accuracy_rate)}</span>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <span className="text-sm">
-                      {source.correct_predictions}/{source.total_predictions}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <div className="flex justify-end">
-                      <div className="w-16 bg-muted rounded-full h-1.5">
-                        <div
-                          className="bg-primary h-1.5 rounded-full"
-                          style={{ width: `${source.reasoning_quality * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <div className="flex justify-end">
-                      <div className="w-16 bg-muted rounded-full h-1.5">
-                        <div
-                          className="bg-primary h-1.5 rounded-full"
-                          style={{ width: `${source.transparency_score * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  </td>
+        <div className="bg-card rounded-lg border overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b bg-accent/30">
+                  <th className="text-left py-2.5 px-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider w-10">#</th>
+                  <th className="text-left py-2.5 px-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Source</th>
+                  <th className="text-left py-2.5 px-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Platform</th>
+                  <th className="text-right py-2.5 px-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Cred</th>
+                  <th className="text-right py-2.5 px-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Accuracy</th>
+                  <th className="text-right py-2.5 px-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Record</th>
+                  <th className="text-right py-2.5 px-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Reasoning</th>
+                  <th className="text-right py-2.5 px-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Transparency</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {sources.map((source, index) => (
+                  <tr key={source.id} className="hover:bg-accent/20 transition-colors">
+                    <td className="py-2.5 px-3">
+                      <div className="flex items-center gap-1.5">
+                        {index < 3 && (
+                          <Award
+                            className={`h-3 w-3 ${
+                              index === 0
+                                ? 'text-yellow-500'
+                                : index === 1
+                                ? 'text-gray-400'
+                                : 'text-amber-600'
+                            }`}
+                          />
+                        )}
+                        <span className="text-xs font-mono text-muted-foreground">{index + 1}</span>
+                      </div>
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-medium">{source.name}</span>
+                        {source.verified && (
+                          <span className="text-[9px] px-1 py-0.5 rounded bg-primary/10 text-primary font-medium">V</span>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-muted-foreground capitalize">
+                        {source.source_type}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent text-muted-foreground uppercase tracking-wider">
+                        {source.platform}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <span className="text-xs font-mono font-medium">
+                          {source.credibility_score.toFixed(1)}
+                        </span>
+                        {source.credibility_score >= 70 ? (
+                          <TrendingUp className="h-3 w-3 text-green-500" />
+                        ) : source.credibility_score < 40 ? (
+                          <TrendingDown className="h-3 w-3 text-red-500" />
+                        ) : null}
+                      </div>
+                    </td>
+                    <td className="py-2.5 px-3 text-right">
+                      <span className="text-xs font-mono">{formatPercent(source.accuracy_rate)}</span>
+                    </td>
+                    <td className="py-2.5 px-3 text-right">
+                      <span className="text-xs font-mono text-muted-foreground">
+                        {source.correct_predictions}/{source.total_predictions}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 text-right">
+                      <MiniBar value={source.reasoning_quality} />
+                    </td>
+                    <td className="py-2.5 px-3 text-right">
+                      <MiniBar value={source.transparency_score} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function MiniBar({ value }: { value: number }) {
+  const pct = Math.round(value * 100)
+  const color =
+    pct >= 70 ? 'bg-green-500' : pct >= 40 ? 'bg-primary' : 'bg-red-500'
+
+  return (
+    <div className="flex items-center justify-end gap-2">
+      <div className="w-12 bg-accent rounded-full h-1">
+        <div className={`h-1 rounded-full ${color}`} style={{ width: `${pct}%` }} />
+      </div>
+      <span className="text-[10px] font-mono text-muted-foreground w-6 text-right">{pct}%</span>
     </div>
   )
 }
