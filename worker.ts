@@ -13,6 +13,9 @@ const port = process.env.PORT || 3001;
 // Allow frontend to call worker APIs
 app.use(cors());
 
+// Body parsing (required by Inngest serve handler)
+app.use(express.json());
+
 // Inngest endpoint
 app.use(
   "/api/inngest",
