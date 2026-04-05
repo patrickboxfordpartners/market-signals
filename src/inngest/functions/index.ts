@@ -2,3 +2,6 @@ export { scanMentions } from "./scan-mentions.js";
 export { detectSpikes } from "./detect-spikes.js";
 export { extractPredictions } from "./extract-predictions.js";
 export { validatePredictions } from "./validate-predictions.js";
+export { generateMarketPost } from "./generate-market-post.js";
+export { generateReviewRoundup } from "./generate-review-roundup.js";
+export { generateDebateSummary } from "./generate-debate-summary.js";
