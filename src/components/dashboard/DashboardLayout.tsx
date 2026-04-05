@@ -9,10 +9,12 @@ import {
   Radio,
   Menu,
   X,
+  LogOut,
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { MarketTicker } from './MarketTicker'
 import { ErrorBoundary } from '../ErrorBoundary'
+import { useAuth } from '../../hooks/useAuth'
 
 const navigation = [
   { name: 'Overview', href: '/', icon: LayoutDashboard },
@@ -24,6 +26,7 @@ const navigation = [
 
 export function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { signOut, session } = useAuth()
 
   return (
     <div className="min-h-screen bg-background">
@@ -87,11 +90,18 @@ export function DashboardLayout() {
         </nav>
 
         {/* Footer */}
-        <div className="border-t px-5 py-3">
+        <div className="border-t px-5 py-3 space-y-2">
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse-glow" />
             <span className="text-xs text-muted-foreground">System Online</span>
           </div>
+          <button
+            onClick={signOut}
+            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors w-full"
+          >
+            <LogOut className="h-3 w-3" />
+            <span className="truncate">{session?.user?.email || "Sign out"}</span>
+          </button>
         </div>
       </div>
 
