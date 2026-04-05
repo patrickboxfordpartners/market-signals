@@ -34,6 +34,24 @@ const REDDIT_CLIENT_ID = process.env.REDDIT_CLIENT_ID;
 const REDDIT_CLIENT_SECRET = process.env.REDDIT_CLIENT_SECRET;
 const NEWS_API_KEY = process.env.NEWS_API_KEY;
 const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY;
+const ALPHA_VANTAGE_API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
+
+interface AVSentimentArticle {
+  title: string;
+  url: string;
+  time_published: string; // "20260404T120000"
+  authors: string[];
+  summary: string;
+  source: string;
+  overall_sentiment_score: number; // -1 to 1
+  overall_sentiment_label: string;
+  ticker_sentiment: Array<{
+    ticker: string;
+    relevance_score: string;
+    ticker_sentiment_score: string;
+    ticker_sentiment_label: string;
+  }>;
+}
 
 interface FinnhubArticle {
   category: string;
@@ -273,6 +291,50 @@ export const scanMentions = inngest.createFunction(
       return articles;
     });
 
+    // Scan Alpha Vantage NEWS_SENTIMENT (25 req/day free tier — use sparingly)
+    const avArticles = await step.run("scan-alpha-vantage-news", async () => {
+      if (!ALPHA_VANTAGE_API_KEY) {
+        console.warn("Alpha Vantage API key not configured");
+        return [];
+      }
+
+      const articles: AVSentimentArticle[] = [];
+
+      // Use batch tickers param to minimize API calls (max ~5 per scan)
+      // AV supports comma-separated tickers in one call
+      const chunks: string[][] = [];
+      for (let i = 0; i < tickerSymbols.length; i += 5) {
+        chunks.push(tickerSymbols.slice(i, i + 5));
+      }
+
+      // Only use first 3 chunks max (15 tickers) to stay within daily limit
+      for (const chunk of chunks.slice(0, 3)) {
+        try {
+          const tickers = chunk.join(",");
+          const response = await fetch(
+            `https://www.alphavantage.co/query?function=NEWS_SENTIMENT&tickers=${tickers}&limit=10&apikey=${ALPHA_VANTAGE_API_KEY}`
+          );
+
+          if (!response.ok) {
+            console.error("AV News Sentiment error:", response.status);
+            continue;
+          }
+
+          const data = await response.json();
+          if (data.feed) {
+            articles.push(...data.feed);
+          }
+
+          // Respect rate limit
+          await new Promise(resolve => setTimeout(resolve, 15000));
+        } catch (error) {
+          console.error("Error fetching AV news sentiment:", error);
+        }
+      }
+
+      return articles;
+    });
+
     // Store mentions in database
     const stored = await step.run("store-mentions", async () => {
       const mentionsToStore: Array<{
@@ -299,6 +361,9 @@ export const scanMentions = inngest.createFunction(
       }
       for (const article of finnhubArticles) {
         sourceKeys.add(`finnhub:${article.source}`);
+      }
+      for (const article of avArticles) {
+        sourceKeys.add(`alphavantage:${article.source}`);
       }
 
       // Fetch all existing sources in one query
@@ -429,6 +494,32 @@ export const scanMentions = inngest.createFunction(
         }
       }
 
+      // Process Alpha Vantage articles (includes pre-computed sentiment)
+      for (const article of avArticles) {
+        const tickerSentiments = article.ticker_sentiment || [];
+        for (const ts of tickerSentiments) {
+          const symbol = ts.ticker;
+          if (!tickerSymbols.includes(symbol)) continue;
+          const ticker = activeTickers.find(t => t.symbol === symbol);
+          const sourceId = sourceMap.get(`alphavantage:${article.source}`);
+          if (!ticker || !sourceId) continue;
+
+          // Parse AV timestamp "20260404T120000" to ISO
+          const raw = article.time_published;
+          const iso = `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}T${raw.slice(9, 11)}:${raw.slice(11, 13)}:${raw.slice(13, 15)}Z`;
+
+          mentionsToStore.push({
+            ticker_id: ticker.id,
+            source_id: sourceId,
+            content: `${article.title}. ${article.summary}`,
+            url: article.url,
+            platform: "alphavantage",
+            mentioned_at: iso,
+            engagement_score: Math.round(parseFloat(ts.relevance_score) * 100),
+          });
+        }
+      }
+
       // Process Finnhub articles
       for (const article of finnhubArticles) {
         const relatedSymbols = article.related
@@ -507,6 +598,13 @@ export const scanMentions = inngest.createFunction(
           error_message: !FINNHUB_API_KEY ? "Finnhub API key not configured" : null,
           completed_at: new Date().toISOString(),
         },
+        {
+          scan_type: "alphavantage",
+          status: !ALPHA_VANTAGE_API_KEY ? "skipped" : "success",
+          mentions_found: avArticles.length,
+          error_message: !ALPHA_VANTAGE_API_KEY ? "Alpha Vantage API key not configured" : null,
+          completed_at: new Date().toISOString(),
+        },
       ];
 
       await supabase.from("scan_log").insert(logs);
@@ -518,6 +616,7 @@ export const scanMentions = inngest.createFunction(
       reddit_mentions: redditMentions.length,
       news_articles: newsArticles.length,
       finnhub_articles: finnhubArticles.length,
+      av_articles: avArticles.length,
       stored: stored.stored,
     };
   }
