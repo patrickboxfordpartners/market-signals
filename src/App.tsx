@@ -11,6 +11,7 @@ import { LiveSignals } from './pages/LiveSignals'
 import { Login } from './pages/Login'
 import AlertPreferences from './pages/AlertPreferences'
 import AlertHistory from './pages/AlertHistory'
+import MLSignals from './pages/MLSignals'
 import { Activity } from 'lucide-react'
 import { Analytics } from '@vercel/analytics/react'
 import * as Sentry from '@sentry/react'
@@ -82,6 +83,7 @@ function App() {
                 <Route path="tickers/:symbol" element={<TickerDetail />} />
                 <Route path="predictions" element={<PredictionsTracker />} />
                 <Route path="signals" element={<LiveSignals />} />
+                <Route path="ml-signals" element={<MLSignals />} />
                 <Route path="alerts" element={<AlertPreferences />} />
                 <Route path="alerts/history" element={<AlertHistory />} />
               </Route>

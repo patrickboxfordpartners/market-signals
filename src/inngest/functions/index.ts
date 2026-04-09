@@ -8,3 +8,5 @@ export { generateDebateSummary } from "./generate-debate-summary.js";
 export { sendSpikeAlerts } from "./send-spike-alerts.js";
 export { sendPredictionAlerts } from "./send-prediction-alerts.js";
 export { sendDailyDigest } from "./send-daily-digest.js";
+export { generatePredictions } from "./generate-predictions.js";
+export { validateMLPredictions } from "./validate-ml-predictions.js";

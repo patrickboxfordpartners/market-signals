@@ -13,6 +13,7 @@ import {
   Moon,
   Sun,
   Bell,
+  Sparkles,
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { MarketTicker } from './MarketTicker'
@@ -23,6 +24,7 @@ import { useTheme } from '../../hooks/useTheme'
 const navigation = [
   { name: 'Overview', href: '/', icon: LayoutDashboard },
   { name: 'Live Signals', href: '/signals', icon: Radio },
+  { name: 'ML Signals', href: '/ml-signals', icon: Sparkles },
   { name: 'Tickers', href: '/tickers', icon: TrendingUp },
   { name: 'Predictions', href: '/predictions', icon: Target },
   { name: 'Sources', href: '/sources', icon: Users },
