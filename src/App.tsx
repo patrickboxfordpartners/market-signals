@@ -9,6 +9,7 @@ import { PredictionsTracker } from './pages/PredictionsTracker'
 import { LiveSignals } from './pages/LiveSignals'
 import { Login } from './pages/Login'
 import { Activity } from 'lucide-react'
+import { Analytics } from '@vercel/analytics/react'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth()
@@ -50,6 +51,7 @@ function App() {
             <Route path="signals" element={<LiveSignals />} />
           </Route>
         </Routes>
+        <Analytics />
       </AuthProvider>
     </BrowserRouter>
   )
