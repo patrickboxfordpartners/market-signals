@@ -4,11 +4,14 @@ import { supabase } from "../../integrations/supabase/client.js";
 const XAI_API_KEY = process.env.XAI_API_KEY;
 
 export const generateDebateSummary = inngest.createFunction(
-  { id: "generate-debate-summary", name: "Generate blog post from RoundtAIble debates" },
-  { cron: "0 10 * * *" }, // Daily at 10am
+  {
+    id: "generate-debate-summary",
+    name: "Generate blog post from RoundtAIble debates",
+    triggers: [{ cron: "0 10 * * *" }] // Daily at 10am
+  },
   async ({ step }) => {
+
     // Check for new debates that haven't been turned into content yet
-    // We look for debates stored as metadata references in content_drafts
     const existingIds = await step.run("fetch-existing-drafts", async () => {
       const { data } = await supabase
         .from("content_drafts")
@@ -20,18 +23,29 @@ export const generateDebateSummary = inngest.createFunction(
           const meta = d.metadata as Record<string, unknown> | null;
           return meta?.debate_id;
         })
-        .filter(Boolean);
+        .filter(Boolean) as string[];
     });
 
-    // For now, we generate from a summary prompt since RoundtAIble debates
-    // are in a separate system. The function checks if there's a new debate
-    // transcript available via an API or stored reference.
-    //
-    // TODO: Wire up RoundtAIble Supabase once ROUNDTAIBLE_SUPABASE_URL is set
+    // Query debates table (same Supabase instance as content_drafts)
     const debateData = await step.run("check-for-debates", async () => {
-      // Placeholder: in production, this queries the RoundtAIble Supabase
-      // for debates completed in the last 24h that aren't in existingIds
-      return null;
+      const since = new Date(Date.now() - 86400000).toISOString();
+      const { data, error } = await supabase
+        .from("debates")
+        .select("*")
+        .gte("created_at", since)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (error) {
+        console.error("Failed to query Roundtaible debates:", error);
+        return null;
+      }
+
+      // Find first debate not already converted to content
+      const fresh = (data || []).find(
+        (d: Record<string, unknown>) => !existingIds.includes(d.id as string)
+      );
+      return fresh || null;
     });
 
     if (!debateData) {
@@ -57,7 +71,7 @@ export const generateDebateSummary = inngest.createFunction(
             },
             {
               role: "user",
-              content: `Write a blog post based on this debate:\n\n${JSON.stringify(debateData)}`,
+              content: `Write a blog post based on this debate.\n\nTopic: "${(debateData as Record<string, unknown>).topic_title}"\nCategory: ${(debateData as Record<string, unknown>).topic_category}\nParticipants: ${JSON.stringify((debateData as Record<string, unknown>).personas)}\n\nTranscript:\n${JSON.stringify((debateData as Record<string, unknown>).transcript)}`,
             },
           ],
           max_tokens: 1500,
@@ -76,7 +90,7 @@ export const generateDebateSummary = inngest.createFunction(
         .insert({
           source: "roundtaible",
           type: "blog",
-          title: "RoundtAIble Debate Summary",
+          title: `RoundtAIble: ${(debateData as Record<string, unknown>).topic_title}`,
           body: draft,
           metadata: { debate_id: (debateData as Record<string, unknown>).id },
         })

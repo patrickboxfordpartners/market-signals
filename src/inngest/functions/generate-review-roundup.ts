@@ -7,8 +7,11 @@ const REVIEWSNIPER_URL = process.env.REVIEWSNIPER_SUPABASE_URL;
 const REVIEWSNIPER_KEY = process.env.REVIEWSNIPER_SUPABASE_SERVICE_KEY;
 
 export const generateReviewRoundup = inngest.createFunction(
-  { id: "generate-review-roundup", name: "Generate weekly ReviewSniper roundup" },
-  { cron: "0 9 * * 1" }, // Mondays at 9am
+  {
+    id: "generate-review-roundup",
+    name: "Generate weekly ReviewSniper roundup",
+    triggers: [{ cron: "0 9 * * 1" }] // Mondays at 9am
+  },
   async ({ step }) => {
     if (!REVIEWSNIPER_URL || !REVIEWSNIPER_KEY) {
       return { status: "skipped", reason: "ReviewSniper credentials not set" };

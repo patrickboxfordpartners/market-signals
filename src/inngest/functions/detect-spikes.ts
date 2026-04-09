@@ -2,8 +2,11 @@ import { inngest } from "../client.js";
 import { supabase } from "../../integrations/supabase/client.js";
 
 export const detectSpikes = inngest.createFunction(
-  { id: "detect-spikes", name: "Detect mention frequency spikes" },
-  { cron: "0 * * * *" },
+  {
+    id: "detect-spikes",
+    name: "Detect mention frequency spikes",
+    triggers: [{ cron: "0 * * * *" }]
+  },
   async ({ step }) => {
     const today = new Date().toISOString().split("T")[0];
 

@@ -4,17 +4,21 @@ import { supabase } from "../../integrations/supabase/client.js";
 const XAI_API_KEY = process.env.XAI_API_KEY;
 
 export const generateMarketPost = inngest.createFunction(
-  { id: "generate-market-post", name: "Generate LinkedIn post from market spikes" },
-  { cron: "0 8 * * *" }, // Daily at 8am
+  {
+    id: "generate-market-post",
+    name: "Generate LinkedIn post from market spikes",
+    triggers: [{ cron: "0 8 * * *" }] // Daily at 8am
+  },
   async ({ step }) => {
     // Get recent spikes (last 24h)
     const spikes = await step.run("fetch-recent-spikes", async () => {
-      const since = new Date(Date.now() - 86400000).toISOString();
+      const since = new Date(Date.now() - 86400000).toISOString().split("T")[0]; // date only
       const { data, error } = await supabase
-        .from("spikes")
+        .from("mention_frequency")
         .select("*, tickers(symbol, name)")
-        .gte("detected_at", since)
-        .order("spike_ratio", { ascending: false })
+        .eq("spike_detected", true)
+        .gte("date", since)
+        .order("mention_count", { ascending: false })
         .limit(5);
 
       if (error) throw error;
@@ -48,7 +52,7 @@ export const generateMarketPost = inngest.createFunction(
 
       const spikesSummary = spikes.map((s: Record<string, unknown>) => {
         const ticker = s.tickers as Record<string, unknown> | null;
-        return `${ticker?.symbol}: ${s.spike_ratio}x normal volume`;
+        return `${ticker?.symbol} (${ticker?.name}): ${s.mention_count} mentions, sentiment ${s.avg_sentiment_score ?? "N/A"}`;
       }).join("\n");
 
       const predictionsSummary = predictions.map((p: Record<string, unknown>) =>

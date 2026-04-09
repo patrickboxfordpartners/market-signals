@@ -79,8 +79,11 @@ const AMBIGUOUS_TICKERS = new Set([
 ]);
 
 export const scanMentions = inngest.createFunction(
-  { id: "scan-mentions", name: "Scan social media for ticker mentions" },
-  { cron: "*/15 * * * *" },
+  {
+    id: "scan-mentions",
+    name: "Scan social media for ticker mentions",
+    triggers: [{ cron: "*/15 * * * *" }]
+  },
   async ({ step }) => {
     // Get active tickers to monitor
     const activeTickers = await step.run("fetch-active-tickers", async () => {
