@@ -11,6 +11,7 @@ import { LiveSignals } from './pages/LiveSignals'
 import { Login } from './pages/Login'
 import { Activity } from 'lucide-react'
 import { Analytics } from '@vercel/analytics/react'
+import * as Sentry from '@sentry/react'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth()
@@ -32,31 +33,60 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
-    <BrowserRouter>
-      <ThemeProvider>
-        <AuthProvider>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <DashboardLayout />
-                </ProtectedRoute>
-              }
+    <Sentry.ErrorBoundary
+      fallback={({ error, resetError }) => (
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+          <div className="max-w-md w-full bg-card border rounded-lg p-6 text-center">
+            <Activity className="h-12 w-12 mx-auto mb-4 text-destructive" />
+            <h1 className="text-xl font-bold mb-2">Something went wrong</h1>
+            <p className="text-sm text-muted-foreground mb-4">
+              An unexpected error occurred. Please try refreshing the page.
+            </p>
+            <details className="text-left mb-4">
+              <summary className="text-sm font-mono cursor-pointer text-muted-foreground">
+                Error details
+              </summary>
+              <pre className="text-xs mt-2 p-2 bg-accent rounded overflow-auto">
+                {error?.toString()}
+              </pre>
+            </details>
+            <button
+              onClick={resetError}
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold text-sm hover:bg-primary/90 transition-colors"
             >
-              <Route index element={<Overview />} />
-              <Route path="sources" element={<SourceLeaderboard />} />
-              <Route path="tickers" element={<TickerAnalysis />} />
-              <Route path="tickers/:symbol" element={<TickerDetail />} />
-              <Route path="predictions" element={<PredictionsTracker />} />
-              <Route path="signals" element={<LiveSignals />} />
-            </Route>
-          </Routes>
-          <Analytics />
-        </AuthProvider>
-      </ThemeProvider>
-    </BrowserRouter>
+              Try again
+            </button>
+          </div>
+        </div>
+      )}
+      showDialog
+    >
+      <BrowserRouter>
+        <ThemeProvider>
+          <AuthProvider>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<Overview />} />
+                <Route path="sources" element={<SourceLeaderboard />} />
+                <Route path="tickers" element={<TickerAnalysis />} />
+                <Route path="tickers/:symbol" element={<TickerDetail />} />
+                <Route path="predictions" element={<PredictionsTracker />} />
+                <Route path="signals" element={<LiveSignals />} />
+              </Route>
+            </Routes>
+            <Analytics />
+          </AuthProvider>
+        </ThemeProvider>
+      </BrowserRouter>
+    </Sentry.ErrorBoundary>
   )
 }
 
