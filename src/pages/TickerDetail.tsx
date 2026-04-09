@@ -47,6 +47,8 @@ interface Mention {
   engagement_score: number
 }
 
+type DateRange = '7d' | '30d' | '90d' | 'all'
+
 export function TickerDetail() {
   const { symbol } = useParams<{ symbol: string }>()
   const [ticker, setTicker] = useState<TickerInfo | null>(null)
@@ -55,10 +57,11 @@ export function TickerDetail() {
   const [mentions, setMentions] = useState<Mention[]>([])
   const [sentimentBreakdown, setSentimentBreakdown] = useState({ bullish: 0, bearish: 0, neutral: 0 })
   const [loading, setLoading] = useState(true)
+  const [dateRange, setDateRange] = useState<DateRange>('30d')
 
   useEffect(() => {
     if (symbol) fetchAll(symbol)
-  }, [symbol])
+  }, [symbol, dateRange])
 
   async function fetchAll(sym: string) {
     // Fetch ticker
@@ -75,9 +78,10 @@ export function TickerDetail() {
 
     setTicker(tickerData)
 
-    // Fetch frequency data (30 days)
-    const thirtyDaysAgo = new Date()
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    // Fetch frequency data based on selected range
+    const startDate = new Date()
+    const daysMap = { '7d': 7, '30d': 30, '90d': 90, 'all': 365 * 2 } // 2 years for "all"
+    startDate.setDate(startDate.getDate() - daysMap[dateRange])
 
     const [
       { data: freqData },
@@ -88,7 +92,7 @@ export function TickerDetail() {
         .from('mention_frequency')
         .select('date, mention_count, spike_detected')
         .eq('ticker_id', tickerData.id)
-        .gte('date', thirtyDaysAgo.toISOString().split('T')[0])
+        .gte('date', startDate.toISOString().split('T')[0])
         .order('date', { ascending: true }),
       supabase
         .from('predictions')
@@ -201,13 +205,38 @@ export function TickerDetail() {
         <MiniStat label="Mentions" value={formatNumber(mentions.length)} sub="recent 20" />
       </div>
 
+      {/* Date Range Selector */}
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-semibold text-muted-foreground">Time Range:</span>
+        <div className="flex gap-1 bg-accent/50 rounded-lg p-1 border">
+          {(['7d', '30d', '90d', 'all'] as DateRange[]).map((range) => (
+            <button
+              key={range}
+              onClick={() => setDateRange(range)}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                dateRange === range
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+              }`}
+            >
+              {range === 'all' ? 'All Time' : range.toUpperCase()}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Mention frequency chart */}
         <div className="lg:col-span-2 bg-card rounded-lg border shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b bg-accent/30">
             <h2 className="text-base font-bold">Mention Volume</h2>
-            <p className="text-xs text-muted-foreground">Last 30 days</p>
+            <p className="text-xs text-muted-foreground">
+              {dateRange === '7d' && 'Last 7 days'}
+              {dateRange === '30d' && 'Last 30 days'}
+              {dateRange === '90d' && 'Last 90 days'}
+              {dateRange === 'all' && 'All time'}
+            </p>
           </div>
           <div className="p-5">
             {frequency.length > 0 ? (

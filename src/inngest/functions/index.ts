@@ -5,3 +5,6 @@ export { validatePredictions } from "./validate-predictions.js";
 export { generateMarketPost } from "./generate-market-post.js";
 export { generateReviewRoundup } from "./generate-review-roundup.js";
 export { generateDebateSummary } from "./generate-debate-summary.js";
+export { sendSpikeAlerts } from "./send-spike-alerts.js";
+export { sendPredictionAlerts } from "./send-prediction-alerts.js";
+export { sendDailyDigest } from "./send-daily-digest.js";

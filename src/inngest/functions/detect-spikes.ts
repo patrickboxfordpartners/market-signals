@@ -132,6 +132,20 @@ export const detectSpikes = inngest.createFunction(
           reason: "spike_detected",
         },
       });
+
+      // Trigger spike alerts
+      await step.sendEvent("trigger-spike-alerts", {
+        name: "spikes/detected",
+        data: {
+          spike_ids: [], // Could fetch the actual frequency record IDs if needed
+          ticker_symbols: spikes.map(s => s.ticker.symbol),
+          spikes: spikes.map(s => ({
+            symbol: s.ticker.symbol,
+            mentions: s.mentionCount,
+            avg: s.ticker.avg_daily_mentions,
+          })),
+        },
+      });
     }
 
     return {

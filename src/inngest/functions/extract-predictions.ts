@@ -58,6 +58,7 @@ export const extractPredictions = inngest.createFunction(
 
     let predictionsCreated = 0;
     let mentionsProcessed = 0;
+    const highConfidencePredictions: { id: string; symbol: string }[] = [];
 
     for (const batch of batches) {
       const results = await step.run(`analyze-batch-${batch[0].id}`, async () => {
@@ -96,31 +97,51 @@ export const extractPredictions = inngest.createFunction(
 
           // If it's a valid prediction, store it
           if (analysis?.is_prediction && analysis.sentiment && mention.source_id) {
-            const { error } = await supabase.from("predictions").insert({
-              ticker_id: mention.ticker_id,
-              source_id: mention.source_id,
-              mention_id: mention.id,
-              sentiment: analysis.sentiment,
-              price_target: analysis.price_target,
-              timeframe_days: analysis.timeframe_days,
-              confidence_level: analysis.confidence_level,
-              reasoning: analysis.reasoning,
-              data_sources_cited: analysis.data_sources_cited,
-              catalysts: analysis.catalysts,
-              reasoning_quality_score: analysis.reasoning_quality_score,
-              data_discipline_score: analysis.data_discipline_score,
-              transparency_score: analysis.transparency_score,
-              prediction_date: mention.mentioned_at,
-              target_date: analysis.timeframe_days
-                ? new Date(
-                    new Date(mention.mentioned_at).getTime() +
-                      analysis.timeframe_days * 24 * 60 * 60 * 1000
-                  ).toISOString()
-                : null,
-            });
+            const { data: newPrediction, error } = await supabase
+              .from("predictions")
+              .insert({
+                ticker_id: mention.ticker_id,
+                source_id: mention.source_id,
+                mention_id: mention.id,
+                sentiment: analysis.sentiment,
+                price_target: analysis.price_target,
+                timeframe_days: analysis.timeframe_days,
+                confidence_level: analysis.confidence_level,
+                reasoning: analysis.reasoning,
+                data_sources_cited: analysis.data_sources_cited,
+                catalysts: analysis.catalysts,
+                reasoning_quality_score: analysis.reasoning_quality_score,
+                data_discipline_score: analysis.data_discipline_score,
+                transparency_score: analysis.transparency_score,
+                prediction_date: mention.mentioned_at,
+                target_date: analysis.timeframe_days
+                  ? new Date(
+                      new Date(mention.mentioned_at).getTime() +
+                        analysis.timeframe_days * 24 * 60 * 60 * 1000
+                    ).toISOString()
+                  : null,
+              })
+              .select("id");
 
-            if (!error) {
+            if (!error && newPrediction) {
               predictionsCreated++;
+
+              // Track high-confidence predictions for alerts
+              if (analysis.confidence_level === "high") {
+                // Fetch ticker symbol for this prediction
+                const { data: tickerData } = await supabase
+                  .from("tickers")
+                  .select("symbol")
+                  .eq("id", mention.ticker_id)
+                  .single();
+
+                if (tickerData) {
+                  highConfidencePredictions.push({
+                    id: newPrediction[0].id,
+                    symbol: tickerData.symbol,
+                  });
+                }
+              }
 
               // Update source quality metrics
               await supabase
@@ -139,9 +160,21 @@ export const extractPredictions = inngest.createFunction(
       });
     }
 
+    // Trigger alerts for high-confidence predictions
+    if (highConfidencePredictions.length > 0) {
+      await step.sendEvent("trigger-prediction-alerts", {
+        name: "predictions/high-confidence",
+        data: {
+          prediction_ids: highConfidencePredictions.map(p => p.id),
+          ticker_symbols: highConfidencePredictions.map(p => p.symbol),
+        },
+      });
+    }
+
     return {
       mentions_processed: mentionsProcessed,
       predictions_created: predictionsCreated,
+      high_confidence_predictions: highConfidencePredictions.length,
     };
   }
 );
