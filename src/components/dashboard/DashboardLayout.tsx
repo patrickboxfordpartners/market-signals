@@ -10,11 +10,14 @@ import {
   Menu,
   X,
   LogOut,
+  Moon,
+  Sun,
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { MarketTicker } from './MarketTicker'
 import { ErrorBoundary } from '../ErrorBoundary'
 import { useAuth } from '../../hooks/useAuth'
+import { useTheme } from '../../hooks/useTheme'
 
 const navigation = [
   { name: 'Overview', href: '/', icon: LayoutDashboard },
@@ -27,6 +30,7 @@ const navigation = [
 export function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { signOut, session } = useAuth()
+  const { theme, toggleTheme } = useTheme()
 
   return (
     <div className="min-h-screen bg-background">
@@ -91,9 +95,22 @@ export function DashboardLayout() {
 
         {/* Footer */}
         <div className="border-t px-5 py-3 space-y-2">
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse-glow" />
-            <span className="text-xs text-muted-foreground">System Online</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse-glow" />
+              <span className="text-xs text-muted-foreground">System Online</span>
+            </div>
+            <button
+              onClick={toggleTheme}
+              className="p-1 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            >
+              {theme === 'dark' ? (
+                <Sun className="h-3.5 w-3.5" />
+              ) : (
+                <Moon className="h-3.5 w-3.5" />
+              )}
+            </button>
           </div>
           <button
             onClick={signOut}

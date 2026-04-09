@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './hooks/useAuth'
+import { ThemeProvider } from './hooks/useTheme'
 import { DashboardLayout } from './components/dashboard/DashboardLayout'
 import { Overview } from './pages/Overview'
 import { SourceLeaderboard } from './pages/SourceLeaderboard'
@@ -32,27 +33,29 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <DashboardLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<Overview />} />
-            <Route path="sources" element={<SourceLeaderboard />} />
-            <Route path="tickers" element={<TickerAnalysis />} />
-            <Route path="tickers/:symbol" element={<TickerDetail />} />
-            <Route path="predictions" element={<PredictionsTracker />} />
-            <Route path="signals" element={<LiveSignals />} />
-          </Route>
-        </Routes>
-        <Analytics />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Overview />} />
+              <Route path="sources" element={<SourceLeaderboard />} />
+              <Route path="tickers" element={<TickerAnalysis />} />
+              <Route path="tickers/:symbol" element={<TickerDetail />} />
+              <Route path="predictions" element={<PredictionsTracker />} />
+              <Route path="signals" element={<LiveSignals />} />
+            </Route>
+          </Routes>
+          <Analytics />
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   )
 }

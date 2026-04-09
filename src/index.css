@@ -80,22 +80,22 @@ body {
   letter-spacing: -0.01em;
 }
 
-/* Scrollbar styling for dark mode */
-.dark ::-webkit-scrollbar {
+/* Scrollbar styling */
+::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
-.dark ::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
   background: hsl(var(--background));
 }
 
-.dark ::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
   background: hsl(var(--border));
   border-radius: 3px;
 }
 
-.dark ::-webkit-scrollbar-thumb:hover {
+::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground));
 }
 
