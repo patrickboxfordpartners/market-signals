@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../integrations/supabase/client'
-import { Activity, TrendingUp, TrendingDown, Award, Users } from 'lucide-react'
+import { Activity, TrendingUp, TrendingDown, Award, Users, Download } from 'lucide-react'
 import { formatPercent } from '../lib/utils'
+import { downloadCSV, downloadJSON } from '../lib/export'
 
 interface Source {
   id: string
@@ -62,6 +63,29 @@ export function SourceLeaderboard() {
     )
   }
 
+  function handleExport(format: 'csv' | 'json') {
+    if (sources.length === 0) return
+
+    const exportData = sources.map(s => ({
+      name: s.name,
+      platform: s.platform,
+      type: s.source_type,
+      credibility: s.credibility_score,
+      accuracy: s.accuracy_rate,
+      correct: s.correct_predictions,
+      total: s.total_predictions,
+      reasoning_quality: s.reasoning_quality,
+      transparency: s.transparency_score,
+      verified: s.verified ? 'Yes' : 'No',
+    }))
+
+    if (format === 'csv') {
+      downloadCSV(exportData, `sources-${sortBy}-${new Date().toISOString().split('T')[0]}`)
+    } else {
+      downloadJSON(sources, `sources-${sortBy}-${new Date().toISOString().split('T')[0]}`)
+    }
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -72,20 +96,44 @@ export function SourceLeaderboard() {
           </p>
         </div>
 
-        <div className="flex gap-1 bg-accent/50 rounded-lg p-1 border shadow-sm">
-          {sortOptions.map((opt) => (
-            <button
-              key={opt.key}
-              onClick={() => setSortBy(opt.key)}
-              className={`px-4 py-2 text-sm font-semibold rounded-md transition-all ${
-                sortBy === opt.key
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
+        <div className="flex gap-2">
+          {sources.length > 0 && (
+            <div className="relative group">
+              <button className="flex items-center gap-2 px-4 py-2 border rounded-lg font-semibold text-sm hover:bg-accent transition-colors shadow-sm">
+                <Download className="h-4 w-4" />
+                Export
+              </button>
+              <div className="absolute right-0 top-full mt-1 bg-card border rounded-lg shadow-xl p-1 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-10">
+                <button
+                  onClick={() => handleExport('csv')}
+                  className="block w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-md whitespace-nowrap"
+                >
+                  Download CSV
+                </button>
+                <button
+                  onClick={() => handleExport('json')}
+                  className="block w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-md whitespace-nowrap"
+                >
+                  Download JSON
+                </button>
+              </div>
+            </div>
+          )}
+          <div className="flex gap-1 bg-accent/50 rounded-lg p-1 border shadow-sm">
+            {sortOptions.map((opt) => (
+              <button
+                key={opt.key}
+                onClick={() => setSortBy(opt.key)}
+                className={`px-4 py-2 text-sm font-semibold rounded-md transition-all ${
+                  sortBy === opt.key
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
