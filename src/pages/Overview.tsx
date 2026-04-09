@@ -114,23 +114,23 @@ export function Overview() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Overview</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <h1 className="text-3xl font-bold tracking-tight">Overview</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             System health and recent activity
           </p>
         </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Radio className="h-3 w-3 text-green-500" />
-          <span>Live</span>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-green-500/10 px-3 py-1.5 rounded-full border border-green-500/20">
+          <Radio className="h-3.5 w-3.5 text-green-500 animate-pulse" />
+          <span className="font-medium text-green-700 dark:text-green-400">Live</span>
         </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Mentions"
           value={stats.totalMentions}
@@ -158,46 +158,46 @@ export function Overview() {
       </div>
 
       {/* System Widgets */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <SystemStatus lastScanTime={lastScanTime} />
         <TopMovers />
         <ActivityTimeline />
       </div>
 
       {/* Recent Mentions */}
-      <div className="bg-card rounded-lg border overflow-hidden">
-        <div className="px-4 py-3 border-b flex items-center justify-between">
-          <h2 className="text-sm font-semibold">Recent Mentions</h2>
-          <span className="text-xs text-muted-foreground">Live feed</span>
+      <div className="bg-card rounded-lg border shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b bg-accent/30 flex items-center justify-between">
+          <h2 className="text-base font-bold">Recent Mentions</h2>
+          <span className="text-xs font-medium text-muted-foreground bg-background px-2 py-1 rounded-md">Live feed</span>
         </div>
         <div className="divide-y divide-border">
           {recentMentions.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground">
-              <FileText className="h-8 w-8 mx-auto mb-2 opacity-30" />
-              <p className="text-sm">No mentions yet.</p>
+            <div className="p-12 text-center text-muted-foreground">
+              <FileText className="h-10 w-10 mx-auto mb-3 opacity-30" />
+              <p className="text-sm font-medium">No mentions yet.</p>
               <p className="text-xs mt-1">The scanner runs every 15 minutes once API keys are configured.</p>
             </div>
           ) : (
             recentMentions.map((mention) => (
-              <div key={mention.id} className="px-4 py-3 hover:bg-accent/50 transition-colors">
-                <div className="flex items-start justify-between gap-3">
+              <div key={mention.id} className="px-5 py-4 hover:bg-accent/50 transition-colors">
+                <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-mono font-bold text-primary">
+                    <div className="flex items-center gap-2.5 mb-2">
+                      <span className="text-sm font-mono font-bold text-primary">
                         ${mention.ticker_symbol}
                       </span>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-muted-foreground font-medium">
                         {mention.source_name}
                       </span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent text-muted-foreground uppercase tracking-wider">
+                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-accent text-muted-foreground uppercase tracking-wider font-semibold">
                         {mention.platform}
                       </span>
                     </div>
-                    <p className="text-sm text-foreground/80 line-clamp-2 leading-relaxed">
+                    <p className="text-sm text-foreground/90 line-clamp-2 leading-relaxed">
                       {mention.content}
                     </p>
                   </div>
-                  <span className="text-[10px] font-mono text-muted-foreground whitespace-nowrap">
+                  <span className="text-[10px] font-mono text-muted-foreground whitespace-nowrap mt-0.5">
                     {formatDateTime(mention.mentioned_at)}
                   </span>
                 </div>
@@ -222,17 +222,17 @@ function StatCard({
   label: string
 }) {
   return (
-    <div className="bg-card rounded-lg border p-4 card-glow">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+    <div className="bg-card rounded-lg border shadow-sm p-5 hover:shadow-md transition-shadow card-glow">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           {title}
         </span>
-        <div className="text-muted-foreground">{icon}</div>
+        <div className="text-muted-foreground opacity-60">{icon}</div>
       </div>
-      <div className="text-2xl font-bold font-mono tracking-tight">
+      <div className="text-3xl font-bold font-mono tracking-tight mb-1">
         {formatNumber(value)}
       </div>
-      <p className="text-[10px] text-muted-foreground mt-0.5">{label}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
     </div>
   )
 }

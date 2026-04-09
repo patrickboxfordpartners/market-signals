@@ -37,52 +37,52 @@ export function SystemStatus({ lastScanTime }: SystemStatusProps) {
   ]
 
   return (
-    <div className="bg-card rounded-lg border overflow-hidden">
-      <div className="px-4 py-3 border-b flex items-center gap-2">
-        <Zap className="h-3.5 w-3.5 text-primary" />
-        <h2 className="text-sm font-semibold">System Status</h2>
+    <div className="bg-card rounded-lg border shadow-sm overflow-hidden">
+      <div className="px-4 py-3.5 border-b bg-accent/30 flex items-center gap-2">
+        <Zap className="h-4 w-4 text-primary" />
+        <h2 className="text-sm font-bold">System Status</h2>
       </div>
 
       <div className="p-4 space-y-4">
         {/* Worker + Timer */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse-glow" />
-            <span className="text-xs font-medium">Worker Active</span>
+          <div className="flex items-center gap-2.5">
+            <div className="h-2.5 w-2.5 rounded-full bg-green-500 animate-pulse-glow" />
+            <span className="text-sm font-semibold">Worker Active</span>
           </div>
           <div className="text-right">
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Next scan</div>
-            <div className="text-sm font-mono font-bold text-primary">{getNextScanTime()}</div>
+            <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Next scan</div>
+            <div className="text-base font-mono font-bold text-primary">{getNextScanTime()}</div>
           </div>
         </div>
 
         {/* Last Scan */}
-        <div className="flex items-center justify-between text-xs">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Clock className="h-3 w-3" />
+        <div className="flex items-center justify-between text-xs bg-accent/30 px-3 py-2 rounded-md">
+          <div className="flex items-center gap-2 text-muted-foreground font-medium">
+            <Clock className="h-3.5 w-3.5" />
             <span>Last scan</span>
           </div>
-          <span className="font-mono text-muted-foreground">
+          <span className="font-mono text-foreground/80">
             {lastScanTime ? formatDateTime(lastScanTime) : '--:--'}
           </span>
         </div>
 
         {/* API Grid */}
-        <div className="border-t pt-3">
-          <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">
+        <div className="border-t pt-4">
+          <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-2.5">
             API Health
           </div>
-          <div className="grid grid-cols-2 gap-1.5">
+          <div className="grid grid-cols-2 gap-2">
             {apis.map((api) => (
               <div
                 key={api.name}
-                className="flex items-center justify-between px-2.5 py-1.5 rounded bg-accent/50 border border-border/50"
+                className="flex items-center justify-between px-3 py-2 rounded-md bg-accent/50 border border-border/50"
               >
-                <span className="text-[10px] font-medium">{api.name}</span>
+                <span className="text-[11px] font-semibold">{api.name}</span>
                 {api.required ? (
-                  <CheckCircle className="h-3 w-3 text-green-500" />
+                  <CheckCircle className="h-3.5 w-3.5 text-green-500" />
                 ) : (
-                  <AlertTriangle className="h-3 w-3 text-primary/60" />
+                  <AlertTriangle className="h-3.5 w-3.5 text-primary/60" />
                 )}
               </div>
             ))}

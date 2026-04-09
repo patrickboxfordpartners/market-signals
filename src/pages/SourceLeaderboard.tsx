@@ -63,24 +63,24 @@ export function SourceLeaderboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Source Leaderboard</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <h1 className="text-3xl font-bold tracking-tight">Source Leaderboard</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Ranked by track record and reasoning quality
           </p>
         </div>
 
-        <div className="flex gap-1 bg-accent/50 rounded-md p-0.5 border">
+        <div className="flex gap-1 bg-accent/50 rounded-lg p-1 border shadow-sm">
           {sortOptions.map((opt) => (
             <button
               key={opt.key}
               onClick={() => setSortBy(opt.key)}
-              className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+              className={`px-4 py-2 text-sm font-semibold rounded-md transition-all ${
                 sortBy === opt.key
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
               }`}
             >
               {opt.label}
@@ -90,37 +90,37 @@ export function SourceLeaderboard() {
       </div>
 
       {sources.length === 0 ? (
-        <div className="bg-card rounded-lg border p-12 text-center">
-          <Users className="h-8 w-8 mx-auto mb-3 text-muted-foreground opacity-30" />
-          <h3 className="text-sm font-semibold mb-1">No Sources Yet</h3>
-          <p className="text-xs text-muted-foreground">
+        <div className="bg-card rounded-lg border shadow-sm p-16 text-center">
+          <Users className="h-10 w-10 mx-auto mb-4 text-muted-foreground opacity-30" />
+          <h3 className="text-base font-bold mb-2">No Sources Yet</h3>
+          <p className="text-sm text-muted-foreground">
             Sources appear once predictions are validated
           </p>
         </div>
       ) : (
-        <div className="bg-card rounded-lg border overflow-hidden">
+        <div className="bg-card rounded-lg border shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b bg-accent/30">
-                  <th className="text-left py-2.5 px-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider w-10">#</th>
-                  <th className="text-left py-2.5 px-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Source</th>
-                  <th className="text-left py-2.5 px-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Platform</th>
-                  <th className="text-right py-2.5 px-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Cred</th>
-                  <th className="text-right py-2.5 px-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Accuracy</th>
-                  <th className="text-right py-2.5 px-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Record</th>
-                  <th className="text-right py-2.5 px-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Reasoning</th>
-                  <th className="text-right py-2.5 px-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Transparency</th>
+                <tr className="border-b bg-accent/40">
+                  <th className="text-left py-3.5 px-4 text-xs font-bold text-muted-foreground uppercase tracking-wider w-12">#</th>
+                  <th className="text-left py-3.5 px-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Source</th>
+                  <th className="text-left py-3.5 px-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Platform</th>
+                  <th className="text-right py-3.5 px-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Cred</th>
+                  <th className="text-right py-3.5 px-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Accuracy</th>
+                  <th className="text-right py-3.5 px-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Record</th>
+                  <th className="text-right py-3.5 px-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Reasoning</th>
+                  <th className="text-right py-3.5 px-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Transparency</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {sources.map((source, index) => (
-                  <tr key={source.id} className="hover:bg-accent/20 transition-colors">
-                    <td className="py-2.5 px-3">
-                      <div className="flex items-center gap-1.5">
+                  <tr key={source.id} className="hover:bg-accent/30 transition-colors">
+                    <td className="py-3.5 px-4">
+                      <div className="flex items-center gap-2">
                         {index < 3 && (
                           <Award
-                            className={`h-3 w-3 ${
+                            className={`h-4 w-4 ${
                               index === 0
                                 ? 'text-yellow-500'
                                 : index === 1
@@ -129,49 +129,49 @@ export function SourceLeaderboard() {
                             }`}
                           />
                         )}
-                        <span className="text-xs font-mono text-muted-foreground">{index + 1}</span>
+                        <span className="text-sm font-mono font-bold text-muted-foreground">{index + 1}</span>
                       </div>
                     </td>
-                    <td className="py-2.5 px-3">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-medium">{source.name}</span>
+                    <td className="py-3.5 px-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold">{source.name}</span>
                         {source.verified && (
-                          <span className="text-[9px] px-1 py-0.5 rounded bg-primary/10 text-primary font-medium">V</span>
+                          <span className="text-xs px-1.5 py-0.5 rounded-md bg-primary/10 text-primary font-bold">V</span>
                         )}
                       </div>
-                      <span className="text-[10px] text-muted-foreground capitalize">
+                      <span className="text-xs text-muted-foreground capitalize font-medium">
                         {source.source_type}
                       </span>
                     </td>
-                    <td className="py-2.5 px-3">
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent text-muted-foreground uppercase tracking-wider">
+                    <td className="py-3.5 px-4">
+                      <span className="text-xs px-2 py-0.5 rounded-md bg-accent text-muted-foreground uppercase tracking-wider font-semibold">
                         {source.platform}
                       </span>
                     </td>
-                    <td className="py-2.5 px-3 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <span className="text-xs font-mono font-medium">
+                    <td className="py-3.5 px-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <span className="text-sm font-mono font-bold">
                           {source.credibility_score.toFixed(1)}
                         </span>
                         {source.credibility_score >= 70 ? (
-                          <TrendingUp className="h-3 w-3 text-green-500" />
+                          <TrendingUp className="h-3.5 w-3.5 text-green-500" />
                         ) : source.credibility_score < 40 ? (
-                          <TrendingDown className="h-3 w-3 text-red-500" />
+                          <TrendingDown className="h-3.5 w-3.5 text-red-500" />
                         ) : null}
                       </div>
                     </td>
-                    <td className="py-2.5 px-3 text-right">
-                      <span className="text-xs font-mono">{formatPercent(source.accuracy_rate)}</span>
+                    <td className="py-3.5 px-4 text-right">
+                      <span className="text-sm font-mono font-bold">{formatPercent(source.accuracy_rate)}</span>
                     </td>
-                    <td className="py-2.5 px-3 text-right">
-                      <span className="text-xs font-mono text-muted-foreground">
+                    <td className="py-3.5 px-4 text-right">
+                      <span className="text-sm font-mono text-muted-foreground font-semibold">
                         {source.correct_predictions}/{source.total_predictions}
                       </span>
                     </td>
-                    <td className="py-2.5 px-3 text-right">
+                    <td className="py-3.5 px-4 text-right">
                       <MiniBar value={source.reasoning_quality} />
                     </td>
-                    <td className="py-2.5 px-3 text-right">
+                    <td className="py-3.5 px-4 text-right">
                       <MiniBar value={source.transparency_score} />
                     </td>
                   </tr>
@@ -191,11 +191,11 @@ function MiniBar({ value }: { value: number }) {
     pct >= 70 ? 'bg-green-500' : pct >= 40 ? 'bg-primary' : 'bg-red-500'
 
   return (
-    <div className="flex items-center justify-end gap-2">
-      <div className="w-12 bg-accent rounded-full h-1">
-        <div className={`h-1 rounded-full ${color}`} style={{ width: `${pct}%` }} />
+    <div className="flex items-center justify-end gap-2.5">
+      <div className="w-16 bg-accent rounded-full h-1.5">
+        <div className={`h-1.5 rounded-full ${color}`} style={{ width: `${pct}%` }} />
       </div>
-      <span className="text-[10px] font-mono text-muted-foreground w-6 text-right">{pct}%</span>
+      <span className="text-xs font-mono font-bold text-muted-foreground w-8 text-right">{pct}%</span>
     </div>
   )
 }

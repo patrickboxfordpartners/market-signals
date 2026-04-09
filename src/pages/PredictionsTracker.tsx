@@ -92,24 +92,24 @@ export function PredictionsTracker() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Predictions</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <h1 className="text-3xl font-bold tracking-tight">Predictions</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Track predictions and validation outcomes
           </p>
         </div>
 
-        <div className="flex gap-1 bg-accent/50 rounded-md p-0.5 border">
+        <div className="flex gap-1 bg-accent/50 rounded-lg p-1 border shadow-sm">
           {filterOptions.map((opt) => (
             <button
               key={opt.key}
               onClick={() => setFilter(opt.key)}
-              className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+              className={`px-4 py-2 text-sm font-semibold rounded-md transition-all ${
                 filter === opt.key
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
               }`}
             >
               {opt.label}
@@ -119,15 +119,15 @@ export function PredictionsTracker() {
       </div>
 
       {predictions.length === 0 ? (
-        <div className="bg-card rounded-lg border p-12 text-center">
-          <Target className="h-8 w-8 mx-auto mb-3 text-muted-foreground opacity-30" />
-          <h3 className="text-sm font-semibold mb-1">No Predictions Yet</h3>
-          <p className="text-xs text-muted-foreground">
+        <div className="bg-card rounded-lg border shadow-sm p-16 text-center">
+          <Target className="h-10 w-10 mx-auto mb-4 text-muted-foreground opacity-30" />
+          <h3 className="text-base font-bold mb-2">No Predictions Yet</h3>
+          <p className="text-sm text-muted-foreground">
             Predictions appear once mentions are analyzed by the extraction worker
           </p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {predictions.map((prediction) => {
             const sentimentConfig = {
               bullish: { icon: TrendingUp, color: 'text-green-500', bg: 'bg-green-500/10', border: 'border-green-500/20' },
@@ -140,44 +140,44 @@ export function PredictionsTracker() {
             return (
               <div
                 key={prediction.id}
-                className="bg-card rounded-lg border p-4 card-glow"
+                className="bg-card rounded-lg border shadow-sm p-5 card-glow hover:shadow-md transition-shadow"
               >
-                <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center justify-between gap-6">
                   {/* Left side */}
-                  <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex items-center gap-4 min-w-0">
                     {/* Sentiment icon */}
-                    <div className={`p-1.5 rounded ${config.bg} border ${config.border}`}>
-                      <Icon className={`h-3.5 w-3.5 ${config.color}`} />
+                    <div className={`p-2 rounded-md ${config.bg} border ${config.border}`}>
+                      <Icon className={`h-4 w-4 ${config.color}`} />
                     </div>
 
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-bold font-mono text-primary">
+                      <div className="flex items-center gap-2.5 flex-wrap">
+                        <span className="text-sm font-bold font-mono text-primary">
                           ${prediction.ticker_symbol}
                         </span>
-                        <span className={`text-[10px] font-medium uppercase tracking-wider ${config.color}`}>
+                        <span className={`text-xs font-bold uppercase tracking-wider ${config.color}`}>
                           {prediction.sentiment}
                         </span>
                         {prediction.price_target && (
-                          <span className="text-[10px] font-mono text-muted-foreground">
+                          <span className="text-xs font-mono text-muted-foreground">
                             PT ${prediction.price_target}
                           </span>
                         )}
                         {prediction.confidence_level && (
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded border ${
+                          <span className={`text-xs px-2 py-0.5 rounded-md border font-semibold ${
                             prediction.confidence_level === 'high'
-                              ? 'border-primary/30 text-primary bg-primary/5'
+                              ? 'border-primary/30 text-primary bg-primary/10'
                               : prediction.confidence_level === 'medium'
-                              ? 'border-border text-muted-foreground bg-accent/50'
-                              : 'border-border text-muted-foreground bg-accent/30'
+                              ? 'border-border text-muted-foreground bg-accent/60'
+                              : 'border-border text-muted-foreground bg-accent/40'
                           }`}>
                             {prediction.confidence_level}
                           </span>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-3 mt-1 text-[10px] text-muted-foreground">
-                        <span>{prediction.source_name}</span>
+                      <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
+                        <span className="font-medium">{prediction.source_name}</span>
                         <span className="font-mono">
                           cred {prediction.source_credibility.toFixed(0)}
                         </span>
@@ -191,13 +191,13 @@ export function PredictionsTracker() {
                   </div>
 
                   {/* Right side — dates + validation */}
-                  <div className="flex items-center gap-4 shrink-0">
+                  <div className="flex items-center gap-5 shrink-0">
                     <div className="text-right hidden sm:block">
-                      <div className="text-[10px] font-mono text-muted-foreground">
+                      <div className="text-xs font-mono text-muted-foreground">
                         {formatDateTime(prediction.prediction_date)}
                       </div>
                       {prediction.target_date && (
-                        <div className="text-[10px] font-mono text-muted-foreground">
+                        <div className="text-xs font-mono text-muted-foreground mt-0.5">
                           target {formatDateTime(prediction.target_date)}
                         </div>
                       )}
@@ -205,15 +205,15 @@ export function PredictionsTracker() {
 
                     {/* Validation badge */}
                     {prediction.validated ? (
-                      <div className={`flex items-center gap-1 px-2 py-1 rounded border text-xs font-medium ${
+                      <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-sm font-bold ${
                         prediction.was_correct
                           ? 'bg-green-500/10 border-green-500/20 text-green-500'
                           : 'bg-red-500/10 border-red-500/20 text-red-500'
                       }`}>
                         {prediction.was_correct ? (
-                          <CheckCircle className="h-3 w-3" />
+                          <CheckCircle className="h-3.5 w-3.5" />
                         ) : (
-                          <XCircle className="h-3 w-3" />
+                          <XCircle className="h-3.5 w-3.5" />
                         )}
                         <span className="font-mono">
                           {prediction.accuracy_score !== null
@@ -224,8 +224,8 @@ export function PredictionsTracker() {
                         </span>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-1 px-2 py-1 rounded border border-border bg-accent/30 text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3" />
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-accent/30 text-sm text-muted-foreground font-semibold">
+                        <Clock className="h-3.5 w-3.5" />
                         <span>Pending</span>
                       </div>
                     )}

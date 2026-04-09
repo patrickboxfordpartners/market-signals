@@ -171,30 +171,30 @@ export function TickerDetail() {
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link
           to="/tickers"
-          className="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground"
+          className="p-2 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-5 w-5" />
         </Link>
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold font-mono tracking-tight">{ticker.symbol}</h1>
+            <h1 className="text-3xl font-bold font-mono tracking-tight">${ticker.symbol}</h1>
             {ticker.sector && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent text-muted-foreground uppercase tracking-wider">
+              <span className="text-xs px-2.5 py-1 rounded-md bg-accent text-muted-foreground uppercase tracking-wider font-semibold">
                 {ticker.sector}
               </span>
             )}
           </div>
-          <p className="text-sm text-muted-foreground">{ticker.company_name}</p>
+          <p className="text-sm text-muted-foreground mt-0.5">{ticker.company_name}</p>
         </div>
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <MiniStat label="Avg/Day" value={String(ticker.avg_daily_mentions)} />
         <MiniStat label="Spike Threshold" value={String(ticker.mention_spike_threshold)} />
         <MiniStat label="Predictions" value={String(totalPredictions)} />
@@ -202,59 +202,65 @@ export function TickerDetail() {
       </div>
 
       {/* Charts row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Mention frequency chart */}
-        <div className="lg:col-span-2 bg-card rounded-lg border overflow-hidden">
-          <div className="px-4 py-3 border-b">
-            <h2 className="text-sm font-semibold">Mention Volume</h2>
-            <p className="text-[10px] text-muted-foreground">Last 30 days</p>
+        <div className="lg:col-span-2 bg-card rounded-lg border shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b bg-accent/30">
+            <h2 className="text-base font-bold">Mention Volume</h2>
+            <p className="text-xs text-muted-foreground">Last 30 days</p>
           </div>
-          <div className="p-4">
+          <div className="p-5">
             {frequency.length > 0 ? (
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={220}>
                 <AreaChart data={frequency}>
                   <defs>
                     <linearGradient id="mentionGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(38 92% 50%)" stopOpacity={0.3} />
+                      <stop offset="0%" stopColor="hsl(38 92% 50%)" stopOpacity={0.4} />
                       <stop offset="100%" stopColor="hsl(38 92% 50%)" stopOpacity={0.02} />
                     </linearGradient>
                   </defs>
                   <XAxis
                     dataKey="date"
-                    tick={{ fontSize: 10, fill: 'hsl(215 15% 55%)' }}
+                    tick={{ fontSize: 11, fill: 'hsl(215 15% 55%)' }}
                     tickLine={false}
                     axisLine={{ stroke: 'hsl(220 25% 14%)' }}
                     tickFormatter={(d) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     interval="preserveStartEnd"
                   />
                   <YAxis
-                    tick={{ fontSize: 10, fill: 'hsl(215 15% 55%)' }}
+                    tick={{ fontSize: 11, fill: 'hsl(215 15% 55%)' }}
                     tickLine={false}
                     axisLine={false}
-                    width={30}
+                    width={35}
                   />
                   <Tooltip
                     contentStyle={{
                       background: 'hsl(220 40% 9%)',
-                      border: '1px solid hsl(220 25% 14%)',
-                      borderRadius: '6px',
-                      fontSize: '11px',
+                      border: '1px solid hsl(220 25% 20%)',
+                      borderRadius: '8px',
+                      fontSize: '12px',
                       color: 'hsl(210 20% 92%)',
+                      padding: '8px 12px',
+                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.3)',
                     }}
+                    labelStyle={{ fontWeight: 600, marginBottom: '4px' }}
                     labelFormatter={(d) => formatDate(d)}
-                    formatter={(value) => [String(value), 'Mentions']}
+                    formatter={(value: any) => [
+                      <span className="font-mono font-bold">{value}</span>,
+                      <span className="text-muted-foreground ml-1">mentions</span>
+                    ]}
                   />
                   <Area
                     type="monotone"
                     dataKey="mention_count"
                     stroke="hsl(38 92% 50%)"
-                    strokeWidth={2}
+                    strokeWidth={2.5}
                     fill="url(#mentionGrad)"
                   />
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-[200px] flex items-center justify-center text-xs text-muted-foreground grid-pattern rounded">
+              <div className="h-[220px] flex items-center justify-center text-sm text-muted-foreground grid-pattern rounded">
                 No frequency data yet
               </div>
             )}
@@ -262,40 +268,40 @@ export function TickerDetail() {
         </div>
 
         {/* Sentiment breakdown */}
-        <div className="bg-card rounded-lg border overflow-hidden">
-          <div className="px-4 py-3 border-b">
-            <h2 className="text-sm font-semibold">Sentiment</h2>
-            <p className="text-[10px] text-muted-foreground">Prediction breakdown</p>
+        <div className="bg-card rounded-lg border shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b bg-accent/30">
+            <h2 className="text-base font-bold">Sentiment</h2>
+            <p className="text-xs text-muted-foreground">Prediction breakdown</p>
           </div>
-          <div className="p-4">
+          <div className="p-5">
             {totalPredictions > 0 ? (
-              <div className="space-y-4">
-                <ResponsiveContainer width="100%" height={120}>
+              <div className="space-y-5">
+                <ResponsiveContainer width="100%" height={140}>
                   <BarChart data={sentimentBars} layout="vertical">
                     <XAxis type="number" hide />
                     <YAxis
                       type="category"
                       dataKey="label"
-                      tick={{ fontSize: 10, fill: 'hsl(215 15% 55%)' }}
+                      tick={{ fontSize: 11, fill: 'hsl(215 15% 55%)', fontWeight: 500 }}
                       tickLine={false}
                       axisLine={false}
-                      width={50}
+                      width={55}
                     />
-                    <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={16}>
+                    <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={20}>
                       {sentimentBars.map((entry, i) => (
                         <Cell key={i} fill={entry.color} />
                       ))}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
-                <div className="flex items-center justify-center gap-4 text-xs">
-                  <span className="text-green-500 font-mono">{sentimentBreakdown.bullish} bull</span>
-                  <span className="text-muted-foreground font-mono">{sentimentBreakdown.neutral} neutral</span>
-                  <span className="text-red-500 font-mono">{sentimentBreakdown.bearish} bear</span>
+                <div className="flex items-center justify-center gap-4 text-sm bg-accent/30 py-2.5 rounded-md">
+                  <span className="text-green-500 font-mono font-bold">{sentimentBreakdown.bullish} bull</span>
+                  <span className="text-muted-foreground font-mono font-bold">{sentimentBreakdown.neutral} neutral</span>
+                  <span className="text-red-500 font-mono font-bold">{sentimentBreakdown.bearish} bear</span>
                 </div>
               </div>
             ) : (
-              <div className="h-[120px] flex items-center justify-center text-xs text-muted-foreground">
+              <div className="h-[140px] flex items-center justify-center text-sm text-muted-foreground">
                 No predictions yet
               </div>
             )}
@@ -304,37 +310,39 @@ export function TickerDetail() {
       </div>
 
       {/* Predictions + Mentions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Recent predictions */}
-        <div className="bg-card rounded-lg border overflow-hidden">
-          <div className="px-4 py-3 border-b">
-            <h2 className="text-sm font-semibold">Recent Predictions</h2>
+        <div className="bg-card rounded-lg border shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b bg-accent/30">
+            <h2 className="text-base font-bold">Recent Predictions</h2>
           </div>
           <div className="divide-y divide-border">
             {predictions.length === 0 ? (
-              <div className="p-6 text-center text-xs text-muted-foreground">
+              <div className="p-8 text-center text-sm text-muted-foreground">
                 No predictions yet
               </div>
             ) : (
               predictions.slice(0, 10).map((pred) => (
-                <div key={pred.id} className="px-4 py-2.5 flex items-center justify-between hover:bg-accent/20 transition-colors">
-                  <div className="flex items-center gap-2">
-                    {pred.sentiment === 'bullish' && <TrendingUp className="h-3 w-3 text-green-500" />}
-                    {pred.sentiment === 'bearish' && <TrendingDown className="h-3 w-3 text-red-500" />}
-                    {pred.sentiment === 'neutral' && <Minus className="h-3 w-3 text-muted-foreground" />}
-                    <span className="text-xs">{pred.source_name}</span>
-                    <span className="text-[10px] font-mono text-muted-foreground">
-                      {formatDateTime(pred.prediction_date)}
-                    </span>
+                <div key={pred.id} className="px-5 py-3 flex items-center justify-between hover:bg-accent/30 transition-colors">
+                  <div className="flex items-center gap-3">
+                    {pred.sentiment === 'bullish' && <TrendingUp className="h-4 w-4 text-green-500" />}
+                    {pred.sentiment === 'bearish' && <TrendingDown className="h-4 w-4 text-red-500" />}
+                    {pred.sentiment === 'neutral' && <Minus className="h-4 w-4 text-muted-foreground" />}
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium">{pred.source_name}</span>
+                      <span className="text-xs font-mono text-muted-foreground">
+                        {formatDateTime(pred.prediction_date)}
+                      </span>
+                    </div>
                   </div>
                   {pred.validated ? (
                     pred.was_correct ? (
-                      <CheckCircle className="h-3 w-3 text-green-500" />
+                      <CheckCircle className="h-4 w-4 text-green-500" />
                     ) : (
-                      <XCircle className="h-3 w-3 text-red-500" />
+                      <XCircle className="h-4 w-4 text-red-500" />
                     )
                   ) : (
-                    <Clock className="h-3 w-3 text-muted-foreground" />
+                    <Clock className="h-4 w-4 text-muted-foreground" />
                   )}
                 </div>
               ))
@@ -343,30 +351,30 @@ export function TickerDetail() {
         </div>
 
         {/* Recent mentions */}
-        <div className="bg-card rounded-lg border overflow-hidden">
-          <div className="px-4 py-3 border-b">
-            <h2 className="text-sm font-semibold">Recent Mentions</h2>
+        <div className="bg-card rounded-lg border shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b bg-accent/30">
+            <h2 className="text-base font-bold">Recent Mentions</h2>
           </div>
           <div className="divide-y divide-border">
             {mentions.length === 0 ? (
-              <div className="p-6 text-center text-xs text-muted-foreground">
+              <div className="p-8 text-center text-sm text-muted-foreground">
                 No mentions yet
               </div>
             ) : (
               mentions.slice(0, 10).map((mention) => (
-                <div key={mention.id} className="px-4 py-2.5 hover:bg-accent/20 transition-colors">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent text-muted-foreground uppercase tracking-wider">
+                <div key={mention.id} className="px-5 py-3 hover:bg-accent/30 transition-colors">
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <span className="text-xs px-2 py-0.5 rounded-md bg-accent text-muted-foreground uppercase tracking-wider font-semibold">
                       {mention.platform}
                     </span>
-                    <span className="text-[10px] text-muted-foreground">{mention.source_name}</span>
+                    <span className="text-xs text-muted-foreground font-medium">{mention.source_name}</span>
                     {mention.engagement_score > 0 && (
-                      <span className="text-[10px] font-mono text-muted-foreground">
+                      <span className="text-xs font-mono text-muted-foreground">
                         eng {mention.engagement_score}
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-foreground/80 line-clamp-2">{mention.content}</p>
+                  <p className="text-sm text-foreground/90 line-clamp-2 leading-relaxed">{mention.content}</p>
                 </div>
               ))
             )}
@@ -379,10 +387,10 @@ export function TickerDetail() {
 
 function MiniStat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="bg-card rounded-lg border p-3">
-      <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</div>
-      <div className="text-lg font-bold font-mono mt-0.5">{value}</div>
-      {sub && <div className="text-[10px] text-muted-foreground">{sub}</div>}
+    <div className="bg-card rounded-lg border shadow-sm p-4 hover:shadow-md transition-shadow">
+      <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">{label}</div>
+      <div className="text-2xl font-bold font-mono mt-1.5">{value}</div>
+      {sub && <div className="text-xs text-muted-foreground mt-0.5">{sub}</div>}
     </div>
   )
 }

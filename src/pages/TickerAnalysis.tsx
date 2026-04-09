@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../integrations/supabase/client'
-import { Activity, TrendingUp, AlertTriangle } from 'lucide-react'
+import { Activity, TrendingUp, AlertTriangle, Plus, X } from 'lucide-react'
 import { formatNumber, formatDate } from '../lib/utils'
 import { AreaChart, Area, ResponsiveContainer } from 'recharts'
 
@@ -20,10 +20,52 @@ interface TickerStat {
 export function TickerAnalysis() {
   const [tickers, setTickers] = useState<TickerStat[]>([])
   const [loading, setLoading] = useState(true)
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [addingTicker, setAddingTicker] = useState(false)
+  const [newSymbol, setNewSymbol] = useState('')
+  const [newCompanyName, setNewCompanyName] = useState('')
+  const [newSector, setNewSector] = useState('')
 
   useEffect(() => {
     fetchTickers()
   }, [])
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showAddModal) {
+        setShowAddModal(false)
+      }
+    }
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [showAddModal])
+
+  async function addTicker() {
+    if (!newSymbol.trim()) return
+
+    setAddingTicker(true)
+    const symbol = newSymbol.trim().toUpperCase()
+
+    const { error } = await supabase.from('tickers').insert({
+      symbol,
+      company_name: newCompanyName.trim() || null,
+      sector: newSector.trim() || null,
+      is_active: true,
+      avg_daily_mentions: 0,
+      mention_spike_threshold: 10,
+    })
+
+    if (error) {
+      alert(`Error adding ticker: ${error.message}`)
+    } else {
+      setNewSymbol('')
+      setNewCompanyName('')
+      setNewSector('')
+      setShowAddModal(false)
+      fetchTickers()
+    }
+    setAddingTicker(false)
+  }
 
   async function fetchTickers() {
     const { data } = await supabase
@@ -100,36 +142,45 @@ export function TickerAnalysis() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Tickers</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Mention frequency and spike detection -- {tickers.length} tracked
-        </p>
+    <div className="space-y-8">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Tickers</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Mention frequency and spike detection — {tickers.length} tracked
+          </p>
+        </div>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold text-sm hover:bg-primary/90 transition-colors shadow-sm"
+        >
+          <Plus className="h-4 w-4" />
+          Add Ticker
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Main list */}
-        <div className="lg:col-span-2 space-y-2">
+        <div className="lg:col-span-2 space-y-3">
           {tickers.map((ticker) => (
             <Link
               key={ticker.id}
               to={`/tickers/${ticker.symbol}`}
-              className="block bg-card rounded-lg border p-4 card-glow"
+              className="block bg-card rounded-lg border shadow-sm p-5 card-glow hover:shadow-md transition-shadow"
             >
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4 min-w-0">
-                  <div className="w-24">
+              <div className="flex items-center justify-between gap-6">
+                <div className="flex items-center gap-6 min-w-0">
+                  <div className="w-28">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold font-mono">{ticker.symbol}</span>
+                      <span className="text-base font-bold font-mono">${ticker.symbol}</span>
                       {ticker.spike_detected && (
-                        <span className="flex items-center gap-0.5 text-[10px] font-medium text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded">
-                          <AlertTriangle className="h-2.5 w-2.5" />
+                        <span className="flex items-center gap-0.5 text-xs font-bold text-red-500 bg-red-500/10 px-2 py-0.5 rounded-md">
+                          <AlertTriangle className="h-3 w-3" />
                           SPIKE
                         </span>
                       )}
                     </div>
-                    <span className="text-[10px] text-muted-foreground truncate block">
+                    <span className="text-xs text-muted-foreground truncate block">
                       {ticker.company_name}
                     </span>
                   </div>
@@ -162,21 +213,21 @@ export function TickerAnalysis() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-6 text-right">
+                <div className="flex items-center gap-8 text-right">
                   <div>
-                    <div className="text-lg font-bold font-mono">{formatNumber(ticker.mention_count)}</div>
-                    <span className="text-[10px] text-muted-foreground">total</span>
+                    <div className="text-2xl font-bold font-mono">{formatNumber(ticker.mention_count)}</div>
+                    <span className="text-xs text-muted-foreground">total</span>
                   </div>
                   <div className="hidden sm:block">
-                    <div className="text-sm font-mono text-muted-foreground">{ticker.avg_daily_mentions}/d</div>
-                    <span className="text-[10px] text-muted-foreground">avg</span>
+                    <div className="text-base font-mono text-muted-foreground font-semibold">{ticker.avg_daily_mentions}/d</div>
+                    <span className="text-xs text-muted-foreground">avg</span>
                   </div>
                   {ticker.last_mention_date && (
                     <div className="hidden md:block">
-                      <div className="text-[10px] font-mono text-muted-foreground">
+                      <div className="text-xs font-mono text-muted-foreground">
                         {formatDate(ticker.last_mention_date)}
                       </div>
-                      <span className="text-[10px] text-muted-foreground">last seen</span>
+                      <span className="text-xs text-muted-foreground">last seen</span>
                     </div>
                   )}
                 </div>
@@ -185,33 +236,40 @@ export function TickerAnalysis() {
           ))}
 
           {tickers.length === 0 && (
-            <div className="bg-card rounded-lg border p-12 text-center">
-              <TrendingUp className="h-8 w-8 mx-auto mb-3 text-muted-foreground opacity-30" />
-              <h3 className="text-sm font-semibold mb-1">No Tickers</h3>
-              <p className="text-xs text-muted-foreground">
-                Add tickers to the database to start tracking
+            <div className="bg-card rounded-lg border shadow-sm p-16 text-center">
+              <TrendingUp className="h-10 w-10 mx-auto mb-4 text-muted-foreground opacity-30" />
+              <h3 className="text-base font-bold mb-2">No Tickers</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Add your first ticker to start tracking mentions
               </p>
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold text-sm hover:bg-primary/90 transition-colors"
+              >
+                <Plus className="h-4 w-4" />
+                Add Ticker
+              </button>
             </div>
           )}
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-4">
-          <div className="bg-card rounded-lg border overflow-hidden">
-            <div className="px-4 py-3 border-b flex items-center gap-2">
-              <TrendingUp className="h-3.5 w-3.5 text-primary" />
-              <h3 className="text-sm font-semibold">Most Active</h3>
+        <div className="space-y-5">
+          <div className="bg-card rounded-lg border shadow-sm overflow-hidden">
+            <div className="px-4 py-3.5 border-b bg-accent/30 flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-primary" />
+              <h3 className="text-sm font-bold">Most Active</h3>
             </div>
-            <div className="p-3 space-y-1">
+            <div className="p-4 space-y-2">
               {tickers.slice(0, 5).map((ticker, index) => (
-                <div key={ticker.id} className="flex items-center justify-between p-2 rounded-md hover:bg-accent/30 transition-colors">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-muted-foreground font-mono w-4">
+                <div key={ticker.id} className="flex items-center justify-between p-2.5 rounded-md hover:bg-accent/40 transition-colors border border-transparent hover:border-border/50">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xs text-muted-foreground font-mono w-4 font-bold">
                       {index + 1}
                     </span>
-                    <span className="text-xs font-bold font-mono">{ticker.symbol}</span>
+                    <span className="text-sm font-bold font-mono">${ticker.symbol}</span>
                   </div>
-                  <span className="text-xs font-mono text-muted-foreground">
+                  <span className="text-sm font-mono text-muted-foreground font-semibold">
                     {formatNumber(ticker.mention_count)}
                   </span>
                 </div>
@@ -219,23 +277,23 @@ export function TickerAnalysis() {
             </div>
           </div>
 
-          <div className="bg-card rounded-lg border overflow-hidden">
-            <div className="px-4 py-3 border-b flex items-center gap-2">
-              <AlertTriangle className="h-3.5 w-3.5 text-red-500" />
-              <h3 className="text-sm font-semibold">Active Spikes</h3>
+          <div className="bg-card rounded-lg border shadow-sm overflow-hidden">
+            <div className="px-4 py-3.5 border-b bg-accent/30 flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-red-500" />
+              <h3 className="text-sm font-bold">Active Spikes</h3>
             </div>
-            <div className="p-3">
+            <div className="p-4">
               {tickers.filter((t) => t.spike_detected).length === 0 ? (
-                <p className="text-xs text-muted-foreground p-2">No spikes detected</p>
+                <p className="text-sm text-muted-foreground p-2">No spikes detected</p>
               ) : (
-                <div className="space-y-1">
+                <div className="space-y-2">
                   {tickers
                     .filter((t) => t.spike_detected)
                     .slice(0, 5)
                     .map((ticker) => (
-                      <div key={ticker.id} className="flex items-center justify-between p-2 rounded-md bg-red-500/5 border border-red-500/10">
-                        <span className="text-xs font-bold font-mono">{ticker.symbol}</span>
-                        <span className="text-[10px] font-medium text-red-500">ACTIVE</span>
+                      <div key={ticker.id} className="flex items-center justify-between p-2.5 rounded-md bg-red-500/5 border border-red-500/20">
+                        <span className="text-sm font-bold font-mono">${ticker.symbol}</span>
+                        <span className="text-xs font-bold text-red-500">ACTIVE</span>
                       </div>
                     ))}
                 </div>
@@ -244,6 +302,91 @@ export function TickerAnalysis() {
           </div>
         </div>
       </div>
+
+      {/* Add Ticker Modal */}
+      {showAddModal && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={(e) => e.target === e.currentTarget && setShowAddModal(false)}
+        >
+          <div className="bg-card rounded-lg border shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">Add Ticker</h2>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="p-1 rounded-md hover:bg-accent transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                addTicker()
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-semibold mb-1.5">
+                  Symbol <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={newSymbol}
+                  onChange={(e) => setNewSymbol(e.target.value.toUpperCase())}
+                  placeholder="NVDA"
+                  className="w-full px-3 py-2 bg-background border rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-1.5">
+                  Company Name <span className="text-muted-foreground text-xs">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={newCompanyName}
+                  onChange={(e) => setNewCompanyName(e.target.value)}
+                  placeholder="NVIDIA Corporation"
+                  className="w-full px-3 py-2 bg-background border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-1.5">
+                  Sector <span className="text-muted-foreground text-xs">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={newSector}
+                  onChange={(e) => setNewSector(e.target.value)}
+                  placeholder="Technology"
+                  className="w-full px-3 py-2 bg-background border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="flex-1 px-4 py-2 border rounded-lg font-semibold text-sm hover:bg-accent transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!newSymbol.trim() || addingTicker}
+                  className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {addingTicker ? 'Adding...' : 'Add Ticker'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -121,30 +121,30 @@ export function LiveSignals() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Live Signals</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Credibility-weighted sentiment -- last 7 days
+          <h1 className="text-3xl font-bold tracking-tight">Live Signals</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Credibility-weighted sentiment — last 7 days
           </p>
         </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Radio className="h-3 w-3 text-green-500" />
-          <span>Real-time</span>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-green-500/10 px-3 py-1.5 rounded-full border border-green-500/20">
+          <Radio className="h-3.5 w-3.5 text-green-500 animate-pulse" />
+          <span className="font-medium text-green-700 dark:text-green-400">Real-time</span>
         </div>
       </div>
 
       {signals.length === 0 ? (
-        <div className="bg-card rounded-lg border p-12 text-center">
-          <Radio className="h-8 w-8 mx-auto mb-3 text-muted-foreground opacity-30" />
-          <h3 className="text-sm font-semibold mb-1">No Signals Yet</h3>
-          <p className="text-xs text-muted-foreground">
+        <div className="bg-card rounded-lg border shadow-sm p-16 text-center">
+          <Radio className="h-10 w-10 mx-auto mb-4 text-muted-foreground opacity-30" />
+          <h3 className="text-base font-bold mb-2">No Signals Yet</h3>
+          <p className="text-sm text-muted-foreground">
             Signals appear once predictions are captured and analyzed
           </p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {signals.map((signal) => {
             const sentimentPct = Math.abs(signal.weighted_sentiment) * 100
             const isBull = signal.weighted_sentiment > 0
@@ -155,45 +155,45 @@ export function LiveSignals() {
             return (
               <div
                 key={signal.ticker_symbol}
-                className="bg-card rounded-lg border p-4 card-glow"
+                className="bg-card rounded-lg border shadow-sm p-5 card-glow hover:shadow-md transition-shadow"
               >
-                <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center justify-between gap-6">
                   {/* Left: Ticker info */}
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div className="w-20">
-                      <div className="text-sm font-bold font-mono">{signal.ticker_symbol}</div>
-                      <div className="text-[10px] text-muted-foreground truncate">
+                  <div className="flex items-center gap-6 min-w-0">
+                    <div className="w-24">
+                      <div className="text-base font-bold font-mono">${signal.ticker_symbol}</div>
+                      <div className="text-xs text-muted-foreground truncate">
                         {signal.company_name}
                       </div>
                     </div>
 
                     {/* Sentiment breakdown */}
-                    <div className="flex items-center gap-3 text-xs font-mono">
-                      <span className="flex items-center gap-1 text-green-500">
-                        <TrendingUp className="h-3 w-3" />
+                    <div className="flex items-center gap-4 text-sm font-mono">
+                      <span className="flex items-center gap-1.5 text-green-500 font-bold">
+                        <TrendingUp className="h-3.5 w-3.5" />
                         {signal.bullish_count}
                       </span>
-                      <span className="flex items-center gap-1 text-muted-foreground">
-                        <Minus className="h-3 w-3" />
+                      <span className="flex items-center gap-1.5 text-muted-foreground font-bold">
+                        <Minus className="h-3.5 w-3.5" />
                         {signal.neutral_count}
                       </span>
-                      <span className="flex items-center gap-1 text-red-500">
-                        <TrendingDown className="h-3 w-3" />
+                      <span className="flex items-center gap-1.5 text-red-500 font-bold">
+                        <TrendingDown className="h-3.5 w-3.5" />
                         {signal.bearish_count}
                       </span>
                     </div>
 
-                    <div className="hidden sm:block text-[10px] text-muted-foreground">
+                    <div className="hidden sm:block text-xs text-muted-foreground bg-accent px-2.5 py-1 rounded-md">
                       {signal.high_credibility_count} high-cred source{signal.high_credibility_count !== 1 ? 's' : ''}
                     </div>
                   </div>
 
                   {/* Right: Signal gauge */}
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-4">
                     {/* Sentiment bar — centered, bull goes right, bear goes left */}
-                    <div className="w-32 hidden md:block">
-                      <div className="h-2 bg-accent rounded-full overflow-hidden relative">
-                        <div className="absolute inset-y-0 left-1/2 w-px bg-border z-10" />
+                    <div className="w-36 hidden md:block">
+                      <div className="h-3 bg-accent rounded-full overflow-hidden relative">
+                        <div className="absolute inset-y-0 left-1/2 w-0.5 bg-border z-10" />
                         {isBull && (
                           <div
                             className="absolute inset-y-0 left-1/2 bg-green-500 rounded-r-full"
@@ -213,16 +213,16 @@ export function LiveSignals() {
                     </div>
 
                     {/* Score */}
-                    <div className="text-right w-16">
+                    <div className="text-right w-20">
                       <div
-                        className={`text-lg font-bold font-mono ${
+                        className={`text-2xl font-bold font-mono ${
                           isBull ? 'text-green-500' : isBear ? 'text-red-500' : 'text-muted-foreground'
                         }`}
                       >
                         {isBull ? '+' : ''}
                         {(signal.weighted_sentiment * 100).toFixed(0)}
                       </div>
-                      <div className="text-[10px] text-muted-foreground">{strength}</div>
+                      <div className="text-xs text-muted-foreground font-semibold">{strength}</div>
                     </div>
                   </div>
                 </div>

@@ -112,42 +112,42 @@ export function ActivityTimeline() {
   }
 
   return (
-    <div className="bg-card rounded-lg border overflow-hidden">
-      <div className="px-4 py-3 border-b flex items-center gap-2">
-        <Clock className="h-3.5 w-3.5 text-primary" />
-        <h2 className="text-sm font-semibold">Activity</h2>
-        <span className="text-[10px] text-muted-foreground ml-auto">24h</span>
+    <div className="bg-card rounded-lg border shadow-sm overflow-hidden">
+      <div className="px-4 py-3.5 border-b bg-accent/30 flex items-center gap-2">
+        <Clock className="h-4 w-4 text-primary" />
+        <h2 className="text-sm font-bold">Activity</h2>
+        <span className="text-[10px] font-medium text-muted-foreground bg-background px-1.5 py-0.5 rounded ml-auto">24h</span>
       </div>
 
       <div className="p-4">
         {loading ? (
-          <div className="flex items-center justify-center py-6">
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <div className="flex items-center justify-center py-8">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
         ) : events.length === 0 ? (
-          <div className="text-center py-6 text-muted-foreground">
-            <Clock className="h-6 w-6 mx-auto mb-1.5 opacity-30" />
-            <p className="text-xs">No recent activity</p>
+          <div className="text-center py-8 text-muted-foreground">
+            <Clock className="h-7 w-7 mx-auto mb-2 opacity-30" />
+            <p className="text-xs font-medium">No recent activity</p>
           </div>
         ) : (
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             {events.map((event) => {
               const config = typeConfig[event.type]
               const Icon = config.icon
               return (
                 <div
                   key={event.id}
-                  className="flex items-center gap-3 p-2 rounded-md hover:bg-accent/30 transition-colors"
+                  className="flex items-center gap-3 p-2.5 rounded-md hover:bg-accent/40 transition-colors border border-transparent hover:border-border/50"
                 >
-                  <div className={`p-1 rounded ${config.bg}`}>
-                    <Icon className={`h-3 w-3 ${config.color}`} />
+                  <div className={`p-1.5 rounded-md ${config.bg}`}>
+                    <Icon className={`h-3.5 w-3.5 ${config.color}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-mono font-bold text-primary">
+                      <span className="text-xs font-mono font-bold text-primary">
                         ${event.ticker_symbol}
                       </span>
-                      <span className="text-xs text-foreground/80 truncate">
+                      <span className="text-xs text-foreground/90 truncate font-medium">
                         {event.description}
                       </span>
                     </div>
