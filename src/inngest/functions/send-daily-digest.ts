@@ -1,5 +1,6 @@
 import { inngest } from "../client.js";
 import { supabase } from "../../integrations/supabase/client.js";
+import { sendEmail, sendWebhook } from "../../lib/email.js";
 
 export const sendDailyDigest = inngest.createFunction(
   {
@@ -132,6 +133,44 @@ export const sendDailyDigest = inngest.createFunction(
           });
         }
 
+        let deliveryStatus = "pending";
+        let deliveryError: string | null = null;
+        let deliveryChannel: string | null = null;
+
+        // Try email first if enabled
+        if (pref.email_enabled && pref.email_address) {
+          deliveryChannel = "email";
+          const result = await sendEmail({
+            to: pref.email_address,
+            subject,
+            text: message,
+          });
+
+          if (result.success) {
+            deliveryStatus = "sent";
+          } else {
+            deliveryStatus = "failed";
+            deliveryError = result.error || null;
+          }
+        }
+        // Otherwise try webhook
+        else if (pref.webhook_enabled && pref.webhook_url) {
+          deliveryChannel = "webhook";
+          const result = await sendWebhook(pref.webhook_url, {
+            type: "digest",
+            subject,
+            message,
+            summary: digestData,
+          });
+
+          if (result.success) {
+            deliveryStatus = "sent";
+          } else {
+            deliveryStatus = "failed";
+            deliveryError = result.error || null;
+          }
+        }
+
         // Log the digest
         const { error: logError } = await supabase.from("alert_log").insert({
           alert_type: "digest",
@@ -144,8 +183,10 @@ export const sendDailyDigest = inngest.createFunction(
             spike_count: digestData.spikes.length,
             prediction_count: digestData.predictions.length,
           },
-          status: "pending",
-          delivery_channel: pref.email_enabled ? "email" : "webhook",
+          status: deliveryStatus,
+          delivery_channel: deliveryChannel,
+          error_message: deliveryError,
+          sent_at: deliveryStatus === "sent" ? new Date().toISOString() : null,
         });
 
         if (logError) {
@@ -153,13 +194,9 @@ export const sendDailyDigest = inngest.createFunction(
           return;
         }
 
-        // TODO: Actual email/webhook delivery would go here
-        // For now, just mark as sent
-        // await sendEmail(pref.email_address, subject, message)
-        // await sendWebhook(pref.webhook_url, { subject, message })
-
-        console.log(`Digest logged for user ${pref.user_id}: ${subject}`);
-        digestsSent++;
+        if (deliveryStatus === "sent") {
+          digestsSent++;
+        }
       });
     }
 

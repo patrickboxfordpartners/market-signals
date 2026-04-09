@@ -12,6 +12,7 @@ import {
   LogOut,
   Moon,
   Sun,
+  Bell,
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { MarketTicker } from './MarketTicker'
@@ -25,6 +26,7 @@ const navigation = [
   { name: 'Tickers', href: '/tickers', icon: TrendingUp },
   { name: 'Predictions', href: '/predictions', icon: Target },
   { name: 'Sources', href: '/sources', icon: Users },
+  { name: 'Alerts', href: '/alerts', icon: Bell },
 ]
 
 export function DashboardLayout() {

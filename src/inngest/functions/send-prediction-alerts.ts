@@ -1,5 +1,6 @@
 import { inngest } from "../client.js";
 import { supabase } from "../../integrations/supabase/client.js";
+import { sendEmail, sendWebhook } from "../../lib/email.js";
 
 interface PredictionEvent {
   prediction_ids: string[];
@@ -76,6 +77,44 @@ export const sendPredictionAlerts = inngest.createFunction(
         .join('\n\n');
 
       await step.run(`send-alert-${pref.user_id}`, async () => {
+        let deliveryStatus = "pending";
+        let deliveryError: string | null = null;
+        let deliveryChannel: string | null = null;
+
+        // Try email first if enabled
+        if (pref.email_enabled && pref.email_address) {
+          deliveryChannel = "email";
+          const result = await sendEmail({
+            to: pref.email_address,
+            subject,
+            text: message,
+          });
+
+          if (result.success) {
+            deliveryStatus = "sent";
+          } else {
+            deliveryStatus = "failed";
+            deliveryError = result.error || null;
+          }
+        }
+        // Otherwise try webhook
+        else if (pref.webhook_enabled && pref.webhook_url) {
+          deliveryChannel = "webhook";
+          const result = await sendWebhook(pref.webhook_url, {
+            type: "prediction",
+            subject,
+            message,
+            predictions: relevantPredictions,
+          });
+
+          if (result.success) {
+            deliveryStatus = "sent";
+          } else {
+            deliveryStatus = "failed";
+            deliveryError = result.error || null;
+          }
+        }
+
         // Log the alert
         const { error: logError } = await supabase.from("alert_log").insert({
           alert_type: "prediction",
@@ -87,8 +126,10 @@ export const sendPredictionAlerts = inngest.createFunction(
             prediction_ids,
             prediction_count: relevantPredictions.length,
           },
-          status: "pending",
-          delivery_channel: pref.email_enabled ? "email" : "webhook",
+          status: deliveryStatus,
+          delivery_channel: deliveryChannel,
+          error_message: deliveryError,
+          sent_at: deliveryStatus === "sent" ? new Date().toISOString() : null,
         });
 
         if (logError) {
@@ -96,13 +137,9 @@ export const sendPredictionAlerts = inngest.createFunction(
           return;
         }
 
-        // TODO: Actual email/webhook delivery would go here
-        // For now, just mark as sent
-        // await sendEmail(pref.email_address, subject, message)
-        // await sendWebhook(pref.webhook_url, { subject, message })
-
-        console.log(`Alert logged for user ${pref.user_id}: ${subject}`);
-        alertsSent++;
+        if (deliveryStatus === "sent") {
+          alertsSent++;
+        }
       });
     }
 

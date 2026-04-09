@@ -1,5 +1,6 @@
 import { inngest } from "../client.js";
 import { supabase } from "../../integrations/supabase/client.js";
+import { sendEmail, sendWebhook } from "../../lib/email.js";
 
 interface SpikeEvent {
   spike_ids: string[];
@@ -66,6 +67,44 @@ export const sendSpikeAlerts = inngest.createFunction(
         .join('\n');
 
       await step.run(`send-alert-${pref.user_id}`, async () => {
+        let deliveryStatus = "pending";
+        let deliveryError: string | null = null;
+        let deliveryChannel: string | null = null;
+
+        // Try email first if enabled
+        if (pref.email_enabled && pref.email_address) {
+          deliveryChannel = "email";
+          const result = await sendEmail({
+            to: pref.email_address,
+            subject,
+            text: message,
+          });
+
+          if (result.success) {
+            deliveryStatus = "sent";
+          } else {
+            deliveryStatus = "failed";
+            deliveryError = result.error || null;
+          }
+        }
+        // Otherwise try webhook
+        else if (pref.webhook_enabled && pref.webhook_url) {
+          deliveryChannel = "webhook";
+          const result = await sendWebhook(pref.webhook_url, {
+            type: "spike",
+            subject,
+            message,
+            spikes: relevantSpikes,
+          });
+
+          if (result.success) {
+            deliveryStatus = "sent";
+          } else {
+            deliveryStatus = "failed";
+            deliveryError = result.error || null;
+          }
+        }
+
         // Log the alert
         const { error: logError } = await supabase.from("alert_log").insert({
           alert_type: "spike",
@@ -77,8 +116,10 @@ export const sendSpikeAlerts = inngest.createFunction(
             spike_ids,
             spike_count: relevantSpikes.length,
           },
-          status: "pending",
-          delivery_channel: pref.email_enabled ? "email" : "webhook",
+          status: deliveryStatus,
+          delivery_channel: deliveryChannel,
+          error_message: deliveryError,
+          sent_at: deliveryStatus === "sent" ? new Date().toISOString() : null,
         });
 
         if (logError) {
@@ -86,13 +127,9 @@ export const sendSpikeAlerts = inngest.createFunction(
           return;
         }
 
-        // TODO: Actual email/webhook delivery would go here
-        // For now, just mark as sent
-        // await sendEmail(pref.email_address, subject, message)
-        // await sendWebhook(pref.webhook_url, { subject, message })
-
-        console.log(`Alert logged for user ${pref.user_id}: ${subject}`);
-        alertsSent++;
+        if (deliveryStatus === "sent") {
+          alertsSent++;
+        }
       });
     }
 
