@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../integrations/supabase/client'
-import { Activity, TrendingUp, TrendingDown, Minus, CheckCircle, XCircle, Clock, Target, Download } from 'lucide-react'
+import { Activity, TrendingUp, TrendingDown, Minus, CheckCircle, XCircle, Clock, Target, Download, Search } from 'lucide-react'
 import { formatDateTime } from '../lib/utils'
 import { downloadCSV, downloadJSON } from '../lib/export'
 
@@ -24,6 +24,7 @@ export function PredictionsTracker() {
   const [predictions, setPredictions] = useState<Prediction[]>([])
   const [filter, setFilter] = useState<'all' | 'pending' | 'validated'>('all')
   const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
     fetchPredictions()
@@ -92,10 +93,20 @@ export function PredictionsTracker() {
     )
   }
 
-  function handleExport(format: 'csv' | 'json') {
-    if (predictions.length === 0) return
+  const filteredPredictions = predictions.filter(pred => {
+    if (!searchTerm) return true
+    const term = searchTerm.toLowerCase()
+    return (
+      pred.ticker_symbol.toLowerCase().includes(term) ||
+      pred.source_name.toLowerCase().includes(term) ||
+      pred.sentiment.toLowerCase().includes(term)
+    )
+  })
 
-    const exportData = predictions.map(p => ({
+  function handleExport(format: 'csv' | 'json') {
+    if (filteredPredictions.length === 0) return
+
+    const exportData = filteredPredictions.map(p => ({
       ticker: p.ticker_symbol,
       source: p.source_name,
       sentiment: p.sentiment,
@@ -118,7 +129,7 @@ export function PredictionsTracker() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Predictions</h1>
@@ -128,7 +139,7 @@ export function PredictionsTracker() {
         </div>
 
         <div className="flex gap-2">
-          {predictions.length > 0 && (
+          {filteredPredictions.length > 0 && (
             <div className="relative group">
               <button className="flex items-center gap-2 px-4 py-2 border rounded-lg font-semibold text-sm hover:bg-accent transition-colors shadow-sm">
                 <Download className="h-4 w-4" />
@@ -168,6 +179,26 @@ export function PredictionsTracker() {
         </div>
       </div>
 
+      {predictions.length > 0 && (
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by ticker, source, or sentiment..."
+              className="w-full pl-10 pr-4 py-2 bg-background border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          {searchTerm && (
+            <span className="text-sm text-muted-foreground">
+              {filteredPredictions.length} of {predictions.length} predictions
+            </span>
+          )}
+        </div>
+      )}
+
       {predictions.length === 0 ? (
         <div className="bg-card rounded-lg border shadow-sm p-16 text-center">
           <Target className="h-10 w-10 mx-auto mb-4 text-muted-foreground opacity-30" />
@@ -176,9 +207,17 @@ export function PredictionsTracker() {
             Predictions appear once mentions are analyzed by the extraction worker
           </p>
         </div>
+      ) : filteredPredictions.length === 0 ? (
+        <div className="bg-card rounded-lg border shadow-sm p-16 text-center">
+          <Search className="h-10 w-10 mx-auto mb-4 text-muted-foreground opacity-30" />
+          <h3 className="text-base font-bold mb-2">No Results</h3>
+          <p className="text-sm text-muted-foreground">
+            No predictions match your search: "{searchTerm}"
+          </p>
+        </div>
       ) : (
         <div className="space-y-3">
-          {predictions.map((prediction) => {
+          {filteredPredictions.map((prediction) => {
             const sentimentConfig = {
               bullish: { icon: TrendingUp, color: 'text-green-500', bg: 'bg-green-500/10', border: 'border-green-500/20' },
               bearish: { icon: TrendingDown, color: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/20' },

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../integrations/supabase/client'
-import { Activity, TrendingUp, TrendingDown, Award, Users, Download } from 'lucide-react'
+import { Activity, TrendingUp, TrendingDown, Award, Users, Download, Search } from 'lucide-react'
 import { formatPercent } from '../lib/utils'
 import { downloadCSV, downloadJSON } from '../lib/export'
 
@@ -22,6 +22,7 @@ export function SourceLeaderboard() {
   const [sources, setSources] = useState<Source[]>([])
   const [loading, setLoading] = useState(true)
   const [sortBy, setSortBy] = useState<'credibility' | 'accuracy' | 'volume'>('credibility')
+  const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
     fetchSources()
@@ -63,10 +64,20 @@ export function SourceLeaderboard() {
     )
   }
 
-  function handleExport(format: 'csv' | 'json') {
-    if (sources.length === 0) return
+  const filteredSources = sources.filter(source => {
+    if (!searchTerm) return true
+    const term = searchTerm.toLowerCase()
+    return (
+      source.name.toLowerCase().includes(term) ||
+      source.platform.toLowerCase().includes(term) ||
+      source.source_type.toLowerCase().includes(term)
+    )
+  })
 
-    const exportData = sources.map(s => ({
+  function handleExport(format: 'csv' | 'json') {
+    if (filteredSources.length === 0) return
+
+    const exportData = filteredSources.map(s => ({
       name: s.name,
       platform: s.platform,
       type: s.source_type,
@@ -87,7 +98,7 @@ export function SourceLeaderboard() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Source Leaderboard</h1>
@@ -137,6 +148,26 @@ export function SourceLeaderboard() {
         </div>
       </div>
 
+      {sources.length > 0 && (
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search sources by name, platform, or type..."
+              className="w-full pl-10 pr-4 py-2 bg-background border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          {searchTerm && (
+            <span className="text-sm text-muted-foreground">
+              {filteredSources.length} of {sources.length} sources
+            </span>
+          )}
+        </div>
+      )}
+
       {sources.length === 0 ? (
         <div className="bg-card rounded-lg border shadow-sm p-16 text-center">
           <Users className="h-10 w-10 mx-auto mb-4 text-muted-foreground opacity-30" />
@@ -162,7 +193,7 @@ export function SourceLeaderboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {sources.map((source, index) => (
+                {filteredSources.map((source, index) => (
                   <tr key={source.id} className="hover:bg-accent/30 transition-colors">
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-2">
