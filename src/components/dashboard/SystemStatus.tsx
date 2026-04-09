@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Clock, Zap, CheckCircle, AlertTriangle } from 'lucide-react'
+import { Clock, Zap, CheckCircle, Minus } from 'lucide-react'
 import { formatDateTime } from '../../lib/utils'
 
 interface SystemStatusProps {
@@ -82,7 +82,7 @@ export function SystemStatus({ lastScanTime }: SystemStatusProps) {
                 {api.required ? (
                   <CheckCircle className="h-3.5 w-3.5 text-green-500" />
                 ) : (
-                  <AlertTriangle className="h-3.5 w-3.5 text-primary/60" />
+                  <Minus className="h-3.5 w-3.5 text-muted-foreground" />
                 )}
               </div>
             ))}
