@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../integrations/supabase/client'
-import { Activity, TrendingUp, AlertTriangle, Plus, X } from 'lucide-react'
+import { Activity, TrendingUp, AlertTriangle, Plus, X, Edit2, Trash2, Upload } from 'lucide-react'
 import { formatNumber, formatDate } from '../lib/utils'
 import { AreaChart, Area, ResponsiveContainer } from 'recharts'
 
@@ -9,6 +9,7 @@ interface TickerStat {
   id: string
   symbol: string
   company_name: string | null
+  sector: string | null
   mention_count: number
   spike_detected: boolean
   avg_daily_mentions: number
@@ -25,6 +26,17 @@ export function TickerAnalysis() {
   const [newSymbol, setNewSymbol] = useState('')
   const [newCompanyName, setNewCompanyName] = useState('')
   const [newSector, setNewSector] = useState('')
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingTicker, setEditingTicker] = useState<TickerStat | null>(null)
+  const [editCompanyName, setEditCompanyName] = useState('')
+  const [editSector, setEditSector] = useState('')
+  const [updatingTicker, setUpdatingTicker] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [tickerToDelete, setTickerToDelete] = useState<TickerStat | null>(null)
+  const [deletingTicker, setDeletingTicker] = useState(false)
+  const [showBulkImport, setShowBulkImport] = useState(false)
+  const [bulkSymbols, setBulkSymbols] = useState('')
+  const [importingBulk, setImportingBulk] = useState(false)
 
   useEffect(() => {
     fetchTickers()
@@ -32,13 +44,16 @@ export function TickerAnalysis() {
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && showAddModal) {
-        setShowAddModal(false)
+      if (e.key === 'Escape') {
+        if (showDeleteConfirm) setShowDeleteConfirm(false)
+        else if (showEditModal) setShowEditModal(false)
+        else if (showBulkImport) setShowBulkImport(false)
+        else if (showAddModal) setShowAddModal(false)
       }
     }
     window.addEventListener('keydown', handleEscape)
     return () => window.removeEventListener('keydown', handleEscape)
-  }, [showAddModal])
+  }, [showAddModal, showEditModal, showDeleteConfirm, showBulkImport])
 
   async function addTicker() {
     if (!newSymbol.trim()) return
@@ -67,10 +82,125 @@ export function TickerAnalysis() {
     setAddingTicker(false)
   }
 
+  function openEditModal(ticker: TickerStat, e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    setEditingTicker(ticker)
+    setEditCompanyName(ticker.company_name || '')
+    setEditSector(ticker.sector || '')
+    setShowEditModal(true)
+  }
+
+  async function updateTicker() {
+    if (!editingTicker) return
+
+    setUpdatingTicker(true)
+    const { error } = await supabase
+      .from('tickers')
+      .update({
+        company_name: editCompanyName.trim() || null,
+        sector: editSector.trim() || null,
+      })
+      .eq('id', editingTicker.id)
+
+    if (error) {
+      alert(`Error updating ticker: ${error.message}`)
+    } else {
+      setShowEditModal(false)
+      setEditingTicker(null)
+      fetchTickers()
+    }
+    setUpdatingTicker(false)
+  }
+
+  function openDeleteConfirm(ticker: TickerStat, e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    setTickerToDelete(ticker)
+    setShowDeleteConfirm(true)
+  }
+
+  async function deleteTicker() {
+    if (!tickerToDelete) return
+
+    setDeletingTicker(true)
+    const { error } = await supabase
+      .from('tickers')
+      .update({ is_active: false })
+      .eq('id', tickerToDelete.id)
+
+    if (error) {
+      alert(`Error deleting ticker: ${error.message}`)
+    } else {
+      setShowDeleteConfirm(false)
+      setTickerToDelete(null)
+      fetchTickers()
+    }
+    setDeletingTicker(false)
+  }
+
+  async function bulkImportTickers() {
+    if (!bulkSymbols.trim()) return
+
+    setImportingBulk(true)
+
+    // Parse symbols - split by comma, newline, or space
+    const symbols = bulkSymbols
+      .split(/[,\n\s]+/)
+      .map(s => s.trim().toUpperCase())
+      .filter(s => s.length > 0 && s.length <= 5) // Basic validation
+      .filter((v, i, arr) => arr.indexOf(v) === i) // Remove duplicates
+
+    if (symbols.length === 0) {
+      alert('No valid symbols found')
+      setImportingBulk(false)
+      return
+    }
+
+    // Check which symbols already exist
+    const { data: existing } = await supabase
+      .from('tickers')
+      .select('symbol')
+      .in('symbol', symbols)
+
+    const existingSymbols = new Set((existing || []).map(t => t.symbol))
+    const newSymbols = symbols.filter(s => !existingSymbols.has(s))
+
+    if (newSymbols.length === 0) {
+      alert('All symbols already exist in the database')
+      setImportingBulk(false)
+      return
+    }
+
+    // Insert new tickers
+    const { error } = await supabase.from('tickers').insert(
+      newSymbols.map(symbol => ({
+        symbol,
+        is_active: true,
+        avg_daily_mentions: 0,
+        mention_spike_threshold: 10,
+      }))
+    )
+
+    if (error) {
+      alert(`Error importing tickers: ${error.message}`)
+    } else {
+      const skipped = symbols.length - newSymbols.length
+      alert(
+        `Successfully imported ${newSymbols.length} ticker${newSymbols.length !== 1 ? 's' : ''}` +
+        (skipped > 0 ? `\n${skipped} skipped (already exist)` : '')
+      )
+      setBulkSymbols('')
+      setShowBulkImport(false)
+      fetchTickers()
+    }
+    setImportingBulk(false)
+  }
+
   async function fetchTickers() {
     const { data } = await supabase
       .from('tickers')
-      .select('id, symbol, company_name, avg_daily_mentions, is_active')
+      .select('id, symbol, company_name, sector, avg_daily_mentions, is_active')
       .eq('is_active', true)
       .order('symbol')
 
@@ -150,89 +280,115 @@ export function TickerAnalysis() {
             Mention frequency and spike detection — {tickers.length} tracked
           </p>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold text-sm hover:bg-primary/90 transition-colors shadow-sm"
-        >
-          <Plus className="h-4 w-4" />
-          Add Ticker
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowBulkImport(true)}
+            className="flex items-center gap-2 px-4 py-2 border rounded-lg font-semibold text-sm hover:bg-accent transition-colors shadow-sm"
+          >
+            <Upload className="h-4 w-4" />
+            Bulk Import
+          </button>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold text-sm hover:bg-primary/90 transition-colors shadow-sm"
+          >
+            <Plus className="h-4 w-4" />
+            Add Ticker
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Main list */}
         <div className="lg:col-span-2 space-y-3">
           {tickers.map((ticker) => (
-            <Link
-              key={ticker.id}
-              to={`/tickers/${ticker.symbol}`}
-              className="block bg-card rounded-lg border shadow-sm p-5 card-glow hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-center justify-between gap-6">
-                <div className="flex items-center gap-6 min-w-0">
-                  <div className="w-28">
-                    <div className="flex items-center gap-2">
-                      <span className="text-base font-bold font-mono">${ticker.symbol}</span>
-                      {ticker.spike_detected && (
-                        <span className="flex items-center gap-0.5 text-xs font-bold text-red-500 bg-red-500/10 px-2 py-0.5 rounded-md">
-                          <AlertTriangle className="h-3 w-3" />
-                          SPIKE
-                        </span>
+            <div key={ticker.id} className="relative group">
+              <Link
+                to={`/tickers/${ticker.symbol}`}
+                className="block bg-card rounded-lg border shadow-sm p-5 card-glow hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-center justify-between gap-6">
+                  <div className="flex items-center gap-6 min-w-0">
+                    <div className="w-28">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base font-bold font-mono">${ticker.symbol}</span>
+                        {ticker.spike_detected && (
+                          <span className="flex items-center gap-0.5 text-xs font-bold text-red-500 bg-red-500/10 px-2 py-0.5 rounded-md">
+                            <AlertTriangle className="h-3 w-3" />
+                            SPIKE
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs text-muted-foreground truncate block">
+                        {ticker.company_name}
+                      </span>
+                    </div>
+
+                    {/* Sparkline */}
+                    <div className="w-24 h-8 hidden sm:block">
+                      {ticker.sparkline.length > 1 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={ticker.sparkline}>
+                            <defs>
+                              <linearGradient id={`spark-${ticker.id}`} x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="hsl(38 92% 50%)" stopOpacity={0.3} />
+                                <stop offset="100%" stopColor="hsl(38 92% 50%)" stopOpacity={0} />
+                              </linearGradient>
+                            </defs>
+                            <Area
+                              type="monotone"
+                              dataKey="count"
+                              stroke="hsl(38 92% 50%)"
+                              strokeWidth={1.5}
+                              fill={`url(#spark-${ticker.id})`}
+                            />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center">
+                          <div className="h-px w-full bg-border" />
+                        </div>
                       )}
                     </div>
-                    <span className="text-xs text-muted-foreground truncate block">
-                      {ticker.company_name}
-                    </span>
                   </div>
 
-                  {/* Sparkline */}
-                  <div className="w-24 h-8 hidden sm:block">
-                    {ticker.sparkline.length > 1 ? (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={ticker.sparkline}>
-                          <defs>
-                            <linearGradient id={`spark-${ticker.id}`} x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="hsl(38 92% 50%)" stopOpacity={0.3} />
-                              <stop offset="100%" stopColor="hsl(38 92% 50%)" stopOpacity={0} />
-                            </linearGradient>
-                          </defs>
-                          <Area
-                            type="monotone"
-                            dataKey="count"
-                            stroke="hsl(38 92% 50%)"
-                            strokeWidth={1.5}
-                            fill={`url(#spark-${ticker.id})`}
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <div className="h-full w-full flex items-center justify-center">
-                        <div className="h-px w-full bg-border" />
+                  <div className="flex items-center gap-8 text-right">
+                    <div>
+                      <div className="text-2xl font-bold font-mono">{formatNumber(ticker.mention_count)}</div>
+                      <span className="text-xs text-muted-foreground">total</span>
+                    </div>
+                    <div className="hidden sm:block">
+                      <div className="text-base font-mono text-muted-foreground font-semibold">{ticker.avg_daily_mentions}/d</div>
+                      <span className="text-xs text-muted-foreground">avg</span>
+                    </div>
+                    {ticker.last_mention_date && (
+                      <div className="hidden md:block">
+                        <div className="text-xs font-mono text-muted-foreground">
+                          {formatDate(ticker.last_mention_date)}
+                        </div>
+                        <span className="text-xs text-muted-foreground">last seen</span>
                       </div>
                     )}
                   </div>
                 </div>
-
-                <div className="flex items-center gap-8 text-right">
-                  <div>
-                    <div className="text-2xl font-bold font-mono">{formatNumber(ticker.mention_count)}</div>
-                    <span className="text-xs text-muted-foreground">total</span>
-                  </div>
-                  <div className="hidden sm:block">
-                    <div className="text-base font-mono text-muted-foreground font-semibold">{ticker.avg_daily_mentions}/d</div>
-                    <span className="text-xs text-muted-foreground">avg</span>
-                  </div>
-                  {ticker.last_mention_date && (
-                    <div className="hidden md:block">
-                      <div className="text-xs font-mono text-muted-foreground">
-                        {formatDate(ticker.last_mention_date)}
-                      </div>
-                      <span className="text-xs text-muted-foreground">last seen</span>
-                    </div>
-                  )}
-                </div>
+              </Link>
+              <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={(e) => openEditModal(ticker, e)}
+                  className="p-1.5 rounded-md bg-card border hover:bg-accent transition-colors"
+                  title="Edit ticker"
+                >
+                  <Edit2 className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  onClick={(e) => openDeleteConfirm(ticker, e)}
+                  className="p-1.5 rounded-md bg-card border hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                  title="Delete ticker"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
               </div>
-            </Link>
+            </div>
           ))}
 
           {tickers.length === 0 && (
@@ -381,6 +537,189 @@ export function TickerAnalysis() {
                   className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {addingTicker ? 'Adding...' : 'Add Ticker'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Ticker Modal */}
+      {showEditModal && editingTicker && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={(e) => e.target === e.currentTarget && setShowEditModal(false)}
+        >
+          <div className="bg-card rounded-lg border shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">Edit Ticker</h2>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="p-1 rounded-md hover:bg-accent transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                updateTicker()
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-semibold mb-1.5 text-muted-foreground">
+                  Symbol
+                </label>
+                <div className="w-full px-3 py-2 bg-accent border rounded-lg text-sm font-mono font-bold">
+                  {editingTicker.symbol}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-1.5">
+                  Company Name
+                </label>
+                <input
+                  type="text"
+                  value={editCompanyName}
+                  onChange={(e) => setEditCompanyName(e.target.value)}
+                  placeholder="NVIDIA Corporation"
+                  className="w-full px-3 py-2 bg-background border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-1.5">
+                  Sector
+                </label>
+                <input
+                  type="text"
+                  value={editSector}
+                  onChange={(e) => setEditSector(e.target.value)}
+                  placeholder="Technology"
+                  className="w-full px-3 py-2 bg-background border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="flex-1 px-4 py-2 border rounded-lg font-semibold text-sm hover:bg-accent transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={updatingTicker}
+                  className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {updatingTicker ? 'Updating...' : 'Update Ticker'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && tickerToDelete && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={(e) => e.target === e.currentTarget && setShowDeleteConfirm(false)}
+        >
+          <div className="bg-card rounded-lg border shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-red-500">Delete Ticker</h2>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="p-1 rounded-md hover:bg-accent transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <p className="text-sm text-muted-foreground mb-6">
+              Are you sure you want to delete <span className="font-mono font-bold text-foreground">{tickerToDelete.symbol}</span>?
+              This will deactivate the ticker and stop tracking mentions. This action can be reversed later.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 px-4 py-2 border rounded-lg font-semibold text-sm hover:bg-accent transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={deleteTicker}
+                disabled={deletingTicker}
+                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg font-semibold text-sm hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deletingTicker ? 'Deleting...' : 'Delete Ticker'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Import Modal */}
+      {showBulkImport && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={(e) => e.target === e.currentTarget && setShowBulkImport(false)}
+        >
+          <div className="bg-card rounded-lg border shadow-xl max-w-lg w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">Bulk Import Tickers</h2>
+              <button
+                onClick={() => setShowBulkImport(false)}
+                className="p-1 rounded-md hover:bg-accent transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                bulkImportTickers()
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-semibold mb-1.5">
+                  Ticker Symbols
+                </label>
+                <textarea
+                  value={bulkSymbols}
+                  onChange={(e) => setBulkSymbols(e.target.value)}
+                  placeholder="Enter symbols separated by commas, spaces, or newlines&#10;Example: NVDA, TSLA, AAPL"
+                  className="w-full px-3 py-2 bg-background border rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary min-h-[200px]"
+                  autoFocus
+                />
+                <p className="text-xs text-muted-foreground mt-1.5">
+                  Paste a list of ticker symbols. Duplicates and existing tickers will be automatically skipped.
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowBulkImport(false)}
+                  className="flex-1 px-4 py-2 border rounded-lg font-semibold text-sm hover:bg-accent transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!bulkSymbols.trim() || importingBulk}
+                  className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {importingBulk ? 'Importing...' : 'Import Tickers'}
                 </button>
               </div>
             </form>
