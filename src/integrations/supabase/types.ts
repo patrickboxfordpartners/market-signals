@@ -303,6 +303,270 @@ export interface Database {
         }
         Relationships: []
       }
+      alert_preferences: {
+        Row: {
+          id: string
+          user_id: string | null
+          spike_alerts_enabled: boolean
+          prediction_alerts_enabled: boolean
+          daily_digest_enabled: boolean
+          spike_mention_threshold: number
+          prediction_confidence_threshold: number
+          email_enabled: boolean
+          email_address: string | null
+          webhook_enabled: boolean
+          webhook_url: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          spike_alerts_enabled?: boolean
+          prediction_alerts_enabled?: boolean
+          daily_digest_enabled?: boolean
+          spike_mention_threshold?: number
+          prediction_confidence_threshold?: number
+          email_enabled?: boolean
+          email_address?: string | null
+          webhook_enabled?: boolean
+          webhook_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          spike_alerts_enabled?: boolean
+          prediction_alerts_enabled?: boolean
+          daily_digest_enabled?: boolean
+          spike_mention_threshold?: number
+          prediction_confidence_threshold?: number
+          email_enabled?: boolean
+          email_address?: string | null
+          webhook_enabled?: boolean
+          webhook_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      alert_log: {
+        Row: {
+          id: string
+          alert_type: string
+          user_id: string | null
+          ticker_symbol: string | null
+          subject: string
+          message: string
+          metadata: Json | null
+          status: string
+          delivery_channel: string | null
+          error_message: string | null
+          sent_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          alert_type: string
+          user_id?: string | null
+          ticker_symbol?: string | null
+          subject: string
+          message: string
+          metadata?: Json | null
+          status?: string
+          delivery_channel?: string | null
+          error_message?: string | null
+          sent_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          alert_type?: string
+          user_id?: string | null
+          ticker_symbol?: string | null
+          subject?: string
+          message?: string
+          metadata?: Json | null
+          status?: string
+          delivery_channel?: string | null
+          error_message?: string | null
+          sent_at?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      content_drafts: {
+        Row: {
+          id: string
+          source: string
+          type: string
+          title: string | null
+          body: string
+          status: string
+          metadata: Json | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          source: string
+          type: string
+          title?: string | null
+          body: string
+          status?: string
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          source?: string
+          type?: string
+          title?: string | null
+          body?: string
+          status?: string
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      model_predictions: {
+        Row: {
+          id: string
+          ticker_id: string | null
+          model_type: string
+          prediction_direction: string | null
+          confidence_score: number | null
+          predicted_magnitude: number | null
+          features: Json | null
+          model_version: string | null
+          trained_at: string | null
+          actual_direction: string | null
+          actual_magnitude: number | null
+          was_correct: boolean | null
+          validated_at: string | null
+          prediction_date: string
+          target_date: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          ticker_id?: string | null
+          model_type: string
+          prediction_direction?: string | null
+          confidence_score?: number | null
+          predicted_magnitude?: number | null
+          features?: Json | null
+          model_version?: string | null
+          trained_at?: string | null
+          actual_direction?: string | null
+          actual_magnitude?: number | null
+          was_correct?: boolean | null
+          validated_at?: string | null
+          prediction_date: string
+          target_date: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          ticker_id?: string | null
+          model_type?: string
+          prediction_direction?: string | null
+          confidence_score?: number | null
+          predicted_magnitude?: number | null
+          features?: Json | null
+          model_version?: string | null
+          trained_at?: string | null
+          actual_direction?: string | null
+          actual_magnitude?: number | null
+          was_correct?: boolean | null
+          validated_at?: string | null
+          prediction_date?: string
+          target_date?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      model_configs: {
+        Row: {
+          id: string
+          model_type: string
+          model_version: string
+          config: Json
+          training_samples: number | null
+          accuracy: number | null
+          precision: number | null
+          recall: number | null
+          f1_score: number | null
+          metrics_by_class: Json | null
+          is_active: boolean
+          trained_at: string
+        }
+        Insert: {
+          id?: string
+          model_type: string
+          model_version: string
+          config: Json
+          training_samples?: number | null
+          accuracy?: number | null
+          precision?: number | null
+          recall?: number | null
+          f1_score?: number | null
+          metrics_by_class?: Json | null
+          is_active?: boolean
+          trained_at?: string
+        }
+        Update: {
+          id?: string
+          model_type?: string
+          model_version?: string
+          config?: Json
+          training_samples?: number | null
+          accuracy?: number | null
+          precision?: number | null
+          recall?: number | null
+          f1_score?: number | null
+          metrics_by_class?: Json | null
+          is_active?: boolean
+          trained_at?: string
+        }
+        Relationships: []
+      }
+      model_training_data: {
+        Row: {
+          id: string
+          ticker_id: string | null
+          features: Json
+          target_direction: string
+          target_magnitude: number
+          observation_date: string
+          target_date: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          ticker_id?: string | null
+          features: Json
+          target_direction: string
+          target_magnitude: number
+          observation_date: string
+          target_date: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          ticker_id?: string | null
+          features?: Json
+          target_direction?: string
+          target_magnitude?: number
+          observation_date?: string
+          target_date?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       mention_frequency: {
         Row: {
           id: string

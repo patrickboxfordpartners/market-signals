@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { DashboardLayout } from "../components/dashboard/DashboardLayout";
 import { supabase } from "../integrations/supabase/client";
-import { useAuth } from "../integrations/supabase/auth";
+import { useAuth } from "../hooks/useAuth";
 import { Calendar, Mail, Webhook, AlertCircle, CheckCircle, Clock } from "lucide-react";
 
 interface AlertLog {
@@ -108,16 +107,16 @@ export default function AlertHistory() {
 
   if (loading) {
     return (
-      <DashboardLayout>
+      <>
         <div className="flex items-center justify-center h-96">
           <div className="text-gray-400">Loading alert history...</div>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   return (
-    <DashboardLayout>
+    <>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Alert History</h1>
@@ -329,6 +328,6 @@ export default function AlertHistory() {
           </div>
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 }

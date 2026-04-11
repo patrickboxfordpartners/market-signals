@@ -1,26 +1,25 @@
 import { useState, useEffect } from "react";
-import { DashboardLayout } from "../components/dashboard/DashboardLayout";
 import { supabase } from "../integrations/supabase/client";
 import { TrendingUp, TrendingDown, Minus, Target, Activity, AlertCircle } from "lucide-react";
 
 interface MLPrediction {
   id: string;
-  ticker_id: string;
+  ticker_id: string | null;
   model_type: string;
-  prediction_direction: string;
-  confidence_score: number;
+  prediction_direction: string | null;
+  confidence_score: number | null;
   predicted_magnitude: number | null;
   features: any;
   target_date: string;
-  tickers: { symbol: string; company_name: string };
+  tickers: { symbol: string; company_name: string | null } | null;
 }
 
 interface ModelMetrics {
   model_type: string;
-  accuracy: number;
-  precision: number;
-  recall: number;
-  f1_score: number;
+  accuracy: number | null;
+  precision: number | null;
+  recall: number | null;
+  f1_score: number | null;
 }
 
 export default function MLSignals() {
@@ -62,9 +61,9 @@ export default function MLSignals() {
         .eq("is_active", true)
         .order("trained_at", { ascending: false });
 
-      setPredictions24h(preds24h || []);
-      setPredictions7d(preds7d || []);
-      setMetrics(modelMetrics || []);
+      setPredictions24h((preds24h as unknown as MLPrediction[]) || []);
+      setPredictions7d((preds7d as unknown as MLPrediction[]) || []);
+      setMetrics((modelMetrics as unknown as ModelMetrics[]) || []);
     } catch (error) {
       console.error("Error fetching ML predictions:", error);
     } finally {
@@ -109,16 +108,16 @@ export default function MLSignals() {
 
   if (loading) {
     return (
-      <DashboardLayout>
+      <>
         <div className="flex items-center justify-center h-96">
           <Activity className="h-6 w-6 animate-spin text-gray-400" />
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   return (
-    <DashboardLayout>
+    <>
       <div className="space-y-6">
         <div>
           <div className="flex items-center gap-3 mb-2">
@@ -141,25 +140,25 @@ export default function MLSignals() {
               <div>
                 <div className="text-sm text-gray-400 mb-1">Accuracy</div>
                 <div className="text-2xl font-bold text-emerald-400">
-                  {(activeMetric.accuracy * 100).toFixed(1)}%
+                  {((activeMetric.accuracy ?? 0) * 100).toFixed(1)}%
                 </div>
               </div>
               <div>
                 <div className="text-sm text-gray-400 mb-1">Precision</div>
                 <div className="text-2xl font-bold">
-                  {(activeMetric.precision * 100).toFixed(1)}%
+                  {((activeMetric.precision ?? 0) * 100).toFixed(1)}%
                 </div>
               </div>
               <div>
                 <div className="text-sm text-gray-400 mb-1">Recall</div>
                 <div className="text-2xl font-bold">
-                  {(activeMetric.recall * 100).toFixed(1)}%
+                  {((activeMetric.recall ?? 0) * 100).toFixed(1)}%
                 </div>
               </div>
               <div>
                 <div className="text-sm text-gray-400 mb-1">F1 Score</div>
                 <div className="text-2xl font-bold">
-                  {(activeMetric.f1_score * 100).toFixed(1)}%
+                  {((activeMetric.f1_score ?? 0) * 100).toFixed(1)}%
                 </div>
               </div>
             </div>
@@ -216,11 +215,11 @@ export default function MLSignals() {
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      {getDirectionIcon(prediction.prediction_direction)}
+                      {getDirectionIcon(prediction.prediction_direction || "neutral")}
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-mono text-xl font-bold">{ticker?.symbol}</span>
-                          {getDirectionBadge(prediction.prediction_direction)}
+                          {getDirectionBadge(prediction.prediction_direction || "neutral")}
                         </div>
                         <div className="text-sm text-gray-400">{ticker?.company_name}</div>
                       </div>
@@ -230,9 +229,9 @@ export default function MLSignals() {
                       <div className="text-sm text-gray-400 mb-1">Confidence</div>
                       <div className="flex items-center gap-2">
                         <span className="text-2xl font-bold">
-                          {(prediction.confidence_score * 100).toFixed(0)}%
+                          {((prediction.confidence_score ?? 0) * 100).toFixed(0)}%
                         </span>
-                        {getConfidenceBadge(prediction.confidence_score)}
+                        {getConfidenceBadge(prediction.confidence_score ?? 0)}
                       </div>
                     </div>
                   </div>
@@ -278,6 +277,6 @@ export default function MLSignals() {
           </div>
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 }

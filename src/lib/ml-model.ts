@@ -1,4 +1,4 @@
-import { FeatureVector } from "./ml-features.js";
+import type { FeatureVector } from "./ml-features.js";
 
 export interface ModelConfig {
   version: string;

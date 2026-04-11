@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { DashboardLayout } from "../components/dashboard/DashboardLayout";
 import { supabase } from "../integrations/supabase/client";
-import { useAuth } from "../integrations/supabase/auth";
+import { useAuth } from "../hooks/useAuth";
 import { History } from "lucide-react";
 
 interface AlertPreferences {
@@ -58,7 +57,7 @@ export default function AlertPreferences() {
 
       if (data) {
         setPreferences({
-          ...data,
+          ...data as unknown as AlertPreferences,
           email_address: data.email_address || user!.email || "",
         });
       } else {
@@ -108,16 +107,16 @@ export default function AlertPreferences() {
 
   if (loading) {
     return (
-      <DashboardLayout>
+      <>
         <div className="flex items-center justify-center h-96">
           <div className="text-gray-400">Loading preferences...</div>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   return (
-    <DashboardLayout>
+    <>
       <div className="space-y-6">
         <div className="flex items-start justify-between">
           <div>
@@ -323,6 +322,6 @@ export default function AlertPreferences() {
           </button>
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }
