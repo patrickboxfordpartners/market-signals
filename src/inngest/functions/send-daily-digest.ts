@@ -94,7 +94,7 @@ export const sendDailyDigest = inngest.createFunction(
     for (const pref of alertPrefs) {
       await step.run(`send-digest-${pref.user_id}`, async () => {
         // Build digest message
-        const subject = `📊 Market Signals Daily Digest - ${yesterday}`;
+        const subject = `📊 Street Insights Daily Digest - ${yesterday}`;
 
         let message = `Daily Summary for ${yesterday}\n\n`;
 

@@ -43,7 +43,7 @@ export function Login() {
           <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center border border-primary/20 mx-auto mb-3">
             <Activity className="h-5 w-5 text-primary" />
           </div>
-          <h1 className="text-sm font-bold tracking-tight uppercase">Market Signals</h1>
+          <h1 className="text-sm font-bold tracking-tight uppercase">Street Insights</h1>
           <p className="text-[10px] text-muted-foreground tracking-wider uppercase mt-0.5">
             Boxford Partners
           </p>

@@ -94,7 +94,7 @@ export const generateMarketPost = inngest.createFunction(
         .insert({
           source: "market-signals",
           type: "linkedin",
-          title: `Market Signals: ${spikes.map((s: Record<string, unknown>) => (s.tickers as Record<string, unknown>)?.symbol).join(", ")}`,
+          title: `Street Insights: ${spikes.map((s: Record<string, unknown>) => (s.tickers as Record<string, unknown>)?.symbol).join(", ")}`,
           body: draft,
           metadata: { spike_count: spikes.length, prediction_count: predictions.length },
         })
