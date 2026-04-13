@@ -12,9 +12,9 @@ import { Login } from './pages/Login'
 import AlertPreferences from './pages/AlertPreferences'
 import AlertHistory from './pages/AlertHistory'
 import MLSignals from './pages/MLSignals'
-import { Activity } from 'lucide-react'
 import { Analytics } from '@vercel/analytics/react'
 import * as Sentry from '@sentry/react'
+import logoIcon from './assets/logo-icon.png'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth()
@@ -22,7 +22,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Activity className="h-6 w-6 animate-spin text-muted-foreground" />
+        <div className="h-10 w-10 animate-pulse">
+          <img src={logoIcon} alt="" className="h-full w-full" />
+        </div>
       </div>
     )
   }
@@ -40,7 +42,7 @@ function App() {
       fallback={({ error, resetError }) => (
         <div className="min-h-screen bg-background flex items-center justify-center p-4">
           <div className="max-w-md w-full bg-card border rounded-lg p-6 text-center">
-            <Activity className="h-12 w-12 mx-auto mb-4 text-destructive" />
+            <img src={logoIcon} alt="" className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <h1 className="text-xl font-bold mb-2">Something went wrong</h1>
             <p className="text-sm text-muted-foreground mb-4">
               An unexpected error occurred. Please try refreshing the page.

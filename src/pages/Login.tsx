@@ -1,7 +1,8 @@
 import { useState } from "react"
 import { useAuth } from "../hooks/useAuth"
 import { Navigate } from "react-router-dom"
-import { Activity, Lock } from "lucide-react"
+import { Lock } from "lucide-react"
+import logoIcon from "../assets/logo-icon.png"
 
 export function Login() {
   const { session, loading, signIn } = useAuth()
@@ -13,7 +14,9 @@ export function Login() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Activity className="h-6 w-6 animate-spin text-muted-foreground" />
+        <div className="h-10 w-10 animate-pulse">
+          <img src={logoIcon} alt="" className="h-full w-full" />
+        </div>
       </div>
     )
   }
@@ -40,9 +43,7 @@ export function Login() {
       <div className="w-full max-w-xs">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center border border-primary/20 mx-auto mb-3">
-            <Activity className="h-5 w-5 text-primary" />
-          </div>
+          <img src={logoIcon} alt="" className="h-16 w-auto mx-auto mb-3" />
           <h1 className="text-sm font-bold tracking-tight uppercase">Street Insights</h1>
           <p className="text-[10px] text-muted-foreground tracking-wider uppercase mt-0.5">
             Boxford Partners

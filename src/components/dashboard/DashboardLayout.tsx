@@ -5,7 +5,6 @@ import {
   Users,
   TrendingUp,
   Target,
-  Activity,
   Radio,
   Menu,
   X,
@@ -20,6 +19,7 @@ import { MarketTicker } from './MarketTicker'
 import { ErrorBoundary } from '../ErrorBoundary'
 import { useAuth } from '../../hooks/useAuth'
 import { useTheme } from '../../hooks/useTheme'
+import logoIcon from '../../assets/logo-icon.png'
 
 const navigation = [
   { name: 'Overview', href: '/', icon: LayoutDashboard },
@@ -55,12 +55,10 @@ export function DashboardLayout() {
       >
         {/* Logo */}
         <div className="h-14 flex items-center justify-between px-5 border-b">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center border border-primary/20">
-              <Activity className="h-4 w-4 text-primary" />
-            </div>
+          <div className="flex items-center gap-2">
+            <img src={logoIcon} alt="" className="h-10 w-auto" />
             <div>
-              <h1 className="text-sm font-bold tracking-tight">MARKET SIGNALS</h1>
+              <h1 className="text-sm font-bold tracking-tight">STREET INSIGHTS</h1>
               <p className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase">
                 Boxford Partners
               </p>
@@ -137,8 +135,8 @@ export function DashboardLayout() {
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex items-center gap-2">
-            <Activity className="h-4 w-4 text-primary" />
-            <span className="text-sm font-bold tracking-tight">MARKET SIGNALS</span>
+            <img src={logoIcon} alt="" className="h-8 w-auto" />
+            <span className="text-sm font-bold tracking-tight">STREET INSIGHTS</span>
           </div>
         </div>
 
