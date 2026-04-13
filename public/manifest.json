@@ -1,11 +1,11 @@
 {
-  "name": "Market Signals | Boxford Partners",
-  "short_name": "Market Signals",
-  "description": "Stock sentiment tracking and prediction validation",
+  "name": "Street Insights | Boxford Partners",
+  "short_name": "Street Insights",
+  "description": "Real-time stock sentiment tracking powered by AI",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a0f1a",
-  "theme_color": "#e8a308",
+  "background_color": "#030712",
+  "theme_color": "#0f766e",
   "orientation": "any",
   "icons": [
     {
