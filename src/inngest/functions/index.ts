@@ -10,3 +10,9 @@ export { sendPredictionAlerts } from "./send-prediction-alerts.js";
 export { sendDailyDigest } from "./send-daily-digest.js";
 export { generatePredictions } from "./generate-predictions.js";
 export { validateMLPredictions } from "./validate-ml-predictions.js";
+
+// New background agents
+export { monitorMarketConditions } from "./monitor-market-conditions.js";
+export { generateMultiSignalAlerts } from "./generate-multi-signal-alerts.js";
+export { updateCredibilityScores } from "./update-credibility-scores.js";
+export { enrichMarketData } from "./enrich-market-data.js";
