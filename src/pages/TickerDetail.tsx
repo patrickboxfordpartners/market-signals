@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import { formatNumber, formatDateTime, formatDate } from '../lib/utils'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts'
-import { useFMPData } from '../hooks/useFMPData'
+import { useYahooFinanceData } from '../hooks/useYahooFinanceData'
 import { PricePredictionChart, type PredictionPoint } from '../components/charts/PricePredictionChart'
 import { CandlestickChart, type CandleData } from '../components/charts/CandlestickChart'
 import { FundamentalsDashboard, type FundamentalsData } from '../components/charts/FundamentalsDashboard'
@@ -63,9 +63,9 @@ export function TickerDetail() {
   const [loading, setLoading] = useState(true)
   const [dateRange, setDateRange] = useState<DateRange>('30d')
 
-  // Fetch FMP financial data
+  // Fetch Yahoo Finance data
   const daysMap = { '7d': 7, '30d': 30, '90d': 90, 'all': 365 }
-  const fmpData = useFMPData(symbol || '', daysMap[dateRange])
+  const yahooData = useYahooFinanceData(symbol || '', daysMap[dateRange])
 
   useEffect(() => {
     if (symbol) fetchAll(symbol)
@@ -346,13 +346,13 @@ export function TickerDetail() {
         </div>
       </div>
 
-      {/* FMP Financial Charts */}
-      {!fmpData.loading && !fmpData.error && fmpData.historicalPrices.length > 0 && (
+      {/* Yahoo Finance Charts */}
+      {!yahooData.loading && !yahooData.error && yahooData.historicalPrices.length > 0 && (
         <div className="space-y-5">
           {/* Price + Predictions Overlay */}
           <div className="bg-card rounded-lg border shadow-sm p-5">
             <PricePredictionChart
-              priceData={fmpData.historicalPrices.map((p) => ({
+              priceData={yahooData.historicalPrices.map((p) => ({
                 date: p.date,
                 price: p.close,
                 volume: p.volume,
@@ -373,7 +373,7 @@ export function TickerDetail() {
           <div className="bg-card rounded-lg border shadow-sm p-5">
             <h3 className="text-lg font-semibold text-foreground mb-4">Price Action</h3>
             <CandlestickChart
-              data={fmpData.historicalPrices.map((p): CandleData => ({
+              data={yahooData.historicalPrices.map((p): CandleData => ({
                 date: p.date,
                 open: p.open,
                 high: p.high,
@@ -385,28 +385,27 @@ export function TickerDetail() {
           </div>
 
           {/* Fundamentals Dashboard */}
-          {fmpData.keyMetrics.length > 0 && fmpData.incomeStatements.length > 0 && (
+          {yahooData.fundamentals && (
             <div className="bg-card rounded-lg border shadow-sm p-5">
               <FundamentalsDashboard
-                data={fmpData.keyMetrics.map((m, idx): FundamentalsData => {
-                  const income = fmpData.incomeStatements[idx];
-                  return {
-                    date: m.date,
-                    peRatio: m.peRatio,
-                    revenue: income?.revenue || 0,
-                    eps: m.netIncomePerShare,
-                    roe: m.roe,
-                    debtToEquity: m.debtToEquity,
-                    currentRatio: m.currentRatio,
-                    grossProfitMargin: income?.grossProfitRatio,
-                  };
-                })}
+                data={[
+                  {
+                    date: new Date().toISOString().split('T')[0],
+                    peRatio: yahooData.fundamentals.peRatio,
+                    revenue: yahooData.fundamentals.revenue,
+                    eps: yahooData.fundamentals.trailingEps,
+                    roe: yahooData.fundamentals.returnOnEquity * 100,
+                    debtToEquity: yahooData.fundamentals.debtToEquity,
+                    currentRatio: yahooData.fundamentals.currentRatio,
+                    grossProfitMargin: yahooData.fundamentals.grossMargins * 100,
+                  },
+                ]}
                 latestQuote={
-                  fmpData.quote
+                  yahooData.quote
                     ? {
-                        price: fmpData.quote.price,
-                        marketCap: fmpData.quote.marketCap,
-                        volume: fmpData.quote.volume,
+                        price: yahooData.quote.price,
+                        marketCap: yahooData.quote.marketCap,
+                        volume: yahooData.quote.volume,
                       }
                     : undefined
                 }
@@ -416,16 +415,16 @@ export function TickerDetail() {
         </div>
       )}
 
-      {fmpData.loading && (
+      {yahooData.loading && (
         <div className="bg-card rounded-lg border shadow-sm p-8 text-center">
           <p className="text-sm text-muted-foreground">Loading financial data...</p>
         </div>
       )}
 
-      {fmpData.error && (
+      {yahooData.error && (
         <div className="bg-card rounded-lg border border-destructive shadow-sm p-4">
           <p className="text-sm text-destructive">
-            Failed to load financial data: {fmpData.error}
+            Failed to load financial data: {yahooData.error}
           </p>
         </div>
       )}
