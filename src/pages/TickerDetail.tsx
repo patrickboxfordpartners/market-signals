@@ -13,6 +13,10 @@ import {
 } from 'lucide-react'
 import { formatNumber, formatDateTime, formatDate } from '../lib/utils'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts'
+import { useFMPData } from '../hooks/useFMPData'
+import { PricePredictionChart, type PredictionPoint } from '../components/charts/PricePredictionChart'
+import { CandlestickChart, type CandleData } from '../components/charts/CandlestickChart'
+import { FundamentalsDashboard, type FundamentalsData } from '../components/charts/FundamentalsDashboard'
 
 interface TickerInfo {
   id: string
@@ -58,6 +62,10 @@ export function TickerDetail() {
   const [sentimentBreakdown, setSentimentBreakdown] = useState({ bullish: 0, bearish: 0, neutral: 0 })
   const [loading, setLoading] = useState(true)
   const [dateRange, setDateRange] = useState<DateRange>('30d')
+
+  // Fetch FMP financial data
+  const daysMap = { '7d': 7, '30d': 30, '90d': 90, 'all': 365 }
+  const fmpData = useFMPData(symbol || '', daysMap[dateRange])
 
   useEffect(() => {
     if (symbol) fetchAll(symbol)
@@ -337,6 +345,90 @@ export function TickerDetail() {
           </div>
         </div>
       </div>
+
+      {/* FMP Financial Charts */}
+      {!fmpData.loading && !fmpData.error && fmpData.historicalPrices.length > 0 && (
+        <div className="space-y-5">
+          {/* Price + Predictions Overlay */}
+          <div className="bg-card rounded-lg border shadow-sm p-5">
+            <PricePredictionChart
+              priceData={fmpData.historicalPrices.map((p) => ({
+                date: p.date,
+                price: p.close,
+                volume: p.volume,
+              }))}
+              predictions={predictions.map((pred): PredictionPoint => ({
+                id: pred.id,
+                date: pred.prediction_date.split('T')[0],
+                targetPrice: 100, // TODO: Get target price from predictions table
+                sentiment: pred.sentiment as 'bullish' | 'bearish' | 'neutral',
+                sourceName: pred.source_name,
+                wasCorrect: pred.was_correct,
+              }))}
+              tickerSymbol={symbol || ''}
+            />
+          </div>
+
+          {/* Candlestick Chart */}
+          <div className="bg-card rounded-lg border shadow-sm p-5">
+            <h3 className="text-lg font-semibold text-foreground mb-4">Price Action</h3>
+            <CandlestickChart
+              data={fmpData.historicalPrices.map((p): CandleData => ({
+                date: p.date,
+                open: p.open,
+                high: p.high,
+                low: p.low,
+                close: p.close,
+                volume: p.volume,
+              }))}
+            />
+          </div>
+
+          {/* Fundamentals Dashboard */}
+          {fmpData.keyMetrics.length > 0 && fmpData.incomeStatements.length > 0 && (
+            <div className="bg-card rounded-lg border shadow-sm p-5">
+              <FundamentalsDashboard
+                data={fmpData.keyMetrics.map((m, idx): FundamentalsData => {
+                  const income = fmpData.incomeStatements[idx];
+                  return {
+                    date: m.date,
+                    peRatio: m.peRatio,
+                    revenue: income?.revenue || 0,
+                    eps: m.netIncomePerShare,
+                    roe: m.roe,
+                    debtToEquity: m.debtToEquity,
+                    currentRatio: m.currentRatio,
+                    grossProfitMargin: income?.grossProfitRatio,
+                  };
+                })}
+                latestQuote={
+                  fmpData.quote
+                    ? {
+                        price: fmpData.quote.price,
+                        marketCap: fmpData.quote.marketCap,
+                        volume: fmpData.quote.volume,
+                      }
+                    : undefined
+                }
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {fmpData.loading && (
+        <div className="bg-card rounded-lg border shadow-sm p-8 text-center">
+          <p className="text-sm text-muted-foreground">Loading financial data...</p>
+        </div>
+      )}
+
+      {fmpData.error && (
+        <div className="bg-card rounded-lg border border-destructive shadow-sm p-4">
+          <p className="text-sm text-destructive">
+            Failed to load financial data: {fmpData.error}
+          </p>
+        </div>
+      )}
 
       {/* Predictions + Mentions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
