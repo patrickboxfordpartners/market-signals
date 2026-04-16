@@ -16,7 +16,10 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, 
 import { useYahooFinanceData } from '../hooks/useYahooFinanceData'
 import { PricePredictionChart, type PredictionPoint } from '../components/charts/PricePredictionChart'
 import { CandlestickChart, type CandleData } from '../components/charts/CandlestickChart'
-import { FundamentalsDashboard, type FundamentalsData } from '../components/charts/FundamentalsDashboard'
+import { FundamentalsDashboard } from '../components/charts/FundamentalsDashboard'
+import { TechnicalIndicatorsChart, type PriceDataPoint } from '../components/charts/TechnicalIndicatorsChart'
+import { VolumeSpikeAnalysisChart, type VolumeSpikeDataPoint } from '../components/charts/VolumeSpikeAnalysisChart'
+import { EarningsSurpriseChart } from '../components/charts/EarningsSurpriseChart'
 
 interface TickerInfo {
   id: string
@@ -381,6 +384,80 @@ export function TickerDetail() {
                 close: p.close,
                 volume: p.volume,
               }))}
+            />
+          </div>
+
+          {/* Technical Indicators */}
+          <div className="bg-card rounded-lg border shadow-sm p-5">
+            <TechnicalIndicatorsChart
+              data={yahooData.historicalPrices.map((p): PriceDataPoint => ({
+                date: p.date,
+                close: p.close,
+                volume: p.volume,
+              }))}
+            />
+          </div>
+
+          {/* Volume Spike Analysis */}
+          <div className="bg-card rounded-lg border shadow-sm p-5">
+            <VolumeSpikeAnalysisChart
+              data={frequency
+                .map((freq): VolumeSpikeDataPoint | null => {
+                  const priceData = yahooData.historicalPrices.find((p) => p.date === freq.date);
+                  if (!priceData) return null;
+                  return {
+                    date: freq.date,
+                    volume: priceData.volume,
+                    mentionCount: freq.mention_count,
+                    volumeSpike: priceData.volume > (yahooData.quote?.avgVolume || 0) * 1.5,
+                    mentionSpike: freq.spike_detected,
+                  };
+                })
+                .filter((d): d is VolumeSpikeDataPoint => d !== null)}
+            />
+          </div>
+
+          {/* Earnings Surprise Chart - placeholder data for now */}
+          <div className="bg-card rounded-lg border shadow-sm p-5">
+            <EarningsSurpriseChart
+              data={[
+                {
+                  quarter: 'Q1 2025',
+                  date: '2025-04-15',
+                  actualEPS: 2.45,
+                  estimatedEPS: 2.30,
+                  surprise: 0.15,
+                  surprisePercent: 6.5,
+                  priceChange: 3.2,
+                },
+                {
+                  quarter: 'Q4 2024',
+                  date: '2025-01-15',
+                  actualEPS: 2.80,
+                  estimatedEPS: 2.75,
+                  surprise: 0.05,
+                  surprisePercent: 1.8,
+                  priceChange: 1.5,
+                },
+                {
+                  quarter: 'Q3 2024',
+                  date: '2024-10-15',
+                  actualEPS: 2.20,
+                  estimatedEPS: 2.40,
+                  surprise: -0.20,
+                  surprisePercent: -8.3,
+                  priceChange: -4.7,
+                },
+                {
+                  quarter: 'Q2 2024',
+                  date: '2024-07-15',
+                  actualEPS: 2.10,
+                  estimatedEPS: 2.05,
+                  surprise: 0.05,
+                  surprisePercent: 2.4,
+                  priceChange: 2.1,
+                },
+              ]}
             />
           </div>
 

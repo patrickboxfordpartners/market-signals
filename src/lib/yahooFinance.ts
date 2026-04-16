@@ -63,7 +63,7 @@ class YahooFinanceClient {
    */
   async getQuote(symbol: string): Promise<StockQuote | null> {
     try {
-      const quote = await yahooFinance.quote(symbol);
+      const quote = await yahooFinance.quote(symbol) as any;
 
       if (!quote) return null;
 
@@ -105,9 +105,9 @@ class YahooFinanceClient {
         period1: startDate,
         period2: endDate,
         interval: '1d',
-      });
+      }) as any;
 
-      return result.map((item) => ({
+      return result.map((item: any) => ({
         date: item.date.toISOString().split('T')[0],
         open: item.open,
         high: item.high,
@@ -129,7 +129,7 @@ class YahooFinanceClient {
     try {
       const quoteSummary = await yahooFinance.quoteSummary(symbol, {
         modules: ['defaultKeyStatistics', 'financialData', 'summaryDetail'],
-      });
+      }) as any;
 
       const keyStats = quoteSummary.defaultKeyStatistics;
       const financial = quoteSummary.financialData;
@@ -171,7 +171,7 @@ class YahooFinanceClient {
     try {
       const quoteSummary = await yahooFinance.quoteSummary(symbol, {
         modules: ['earnings', 'earningsHistory'],
-      });
+      }) as any;
 
       return {
         earnings: quoteSummary.earnings,
@@ -188,7 +188,7 @@ class YahooFinanceClient {
    */
   async search(query: string) {
     try {
-      const results = await yahooFinance.search(query);
+      const results = await yahooFinance.search(query) as any;
       return results.quotes || [];
     } catch (error) {
       console.error('Yahoo Finance search error:', error);
