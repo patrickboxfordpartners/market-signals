@@ -372,20 +372,20 @@ export function TickerAnalysis() {
                   </div>
                 </div>
               </Link>
-              <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
                   onClick={(e) => openEditModal(ticker, e)}
-                  className="p-1.5 rounded-md bg-card border hover:bg-accent transition-colors"
+                  className="p-2.5 rounded-md bg-card border hover:bg-accent active:bg-accent/80 transition-colors"
                   title="Edit ticker"
                 >
-                  <Edit2 className="h-3.5 w-3.5" />
+                  <Edit2 className="h-4 w-4" />
                 </button>
                 <button
                   onClick={(e) => openDeleteConfirm(ticker, e)}
-                  className="p-1.5 rounded-md bg-card border hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                  className="p-2.5 rounded-md bg-card border hover:bg-red-500/10 hover:text-red-500 active:bg-red-500/20 transition-colors"
                   title="Delete ticker"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Trash2 className="h-4 w-4" />
                 </button>
               </div>
             </div>

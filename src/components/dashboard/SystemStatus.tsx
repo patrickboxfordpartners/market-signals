@@ -51,7 +51,7 @@ export function SystemStatus({ lastScanTime }: SystemStatusProps) {
             <span className="text-sm font-semibold">Worker Active</span>
           </div>
           <div className="text-right">
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Next scan</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Next scan</div>
             <div className="text-base font-mono font-bold text-primary">{getNextScanTime()}</div>
           </div>
         </div>
@@ -69,7 +69,7 @@ export function SystemStatus({ lastScanTime }: SystemStatusProps) {
 
         {/* API Grid */}
         <div className="border-t pt-4">
-          <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-2.5">
+          <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-2.5">
             API Health
           </div>
           <div className="grid grid-cols-2 gap-2">

@@ -189,7 +189,7 @@ export function Overview() {
                       <span className="text-xs text-muted-foreground font-medium">
                         {mention.source_name}
                       </span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-accent text-muted-foreground uppercase tracking-wider font-semibold">
+                      <span className="text-xs px-2 py-0.5 rounded-md bg-accent text-muted-foreground uppercase tracking-wider font-semibold">
                         {mention.platform}
                       </span>
                     </div>
@@ -197,7 +197,7 @@ export function Overview() {
                       {mention.content}
                     </p>
                   </div>
-                  <span className="text-[10px] font-mono text-muted-foreground whitespace-nowrap mt-0.5">
+                  <span className="text-xs font-mono text-muted-foreground whitespace-nowrap mt-0.5">
                     {formatDateTime(mention.mentioned_at)}
                   </span>
                 </div>

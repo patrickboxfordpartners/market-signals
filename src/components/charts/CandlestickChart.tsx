@@ -26,7 +26,9 @@ interface CandlestickChartProps {
   showVolume?: boolean;
 }
 
-export function CandlestickChart({ data, height = 500, showVolume = true }: CandlestickChartProps) {
+export function CandlestickChart({ data, height: heightProp, showVolume = true }: CandlestickChartProps) {
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const height = heightProp ?? (isMobile ? 300 : 500);
   const chartData = useMemo(() => {
     return data.map((d) => ({
       ...d,

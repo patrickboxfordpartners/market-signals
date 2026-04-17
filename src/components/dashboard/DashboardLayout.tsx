@@ -59,16 +59,16 @@ export function DashboardLayout() {
             <img src={logoIcon} alt="" className="h-10 w-auto" />
             <div>
               <h1 className="text-sm font-bold tracking-tight">STREET INSIGHTS</h1>
-              <p className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase">
+              <p className="text-xs text-muted-foreground font-medium tracking-wider uppercase">
                 Boxford Partners
               </p>
             </div>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="p-1 rounded-md hover:bg-accent lg:hidden"
+            className="p-2.5 -mr-1 rounded-md hover:bg-accent active:bg-accent/80 lg:hidden"
           >
-            <X className="h-4 w-4 text-muted-foreground" />
+            <X className="h-5 w-5 text-muted-foreground" />
           </button>
         </div>
 
@@ -82,7 +82,7 @@ export function DashboardLayout() {
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                  'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors active:bg-accent/80',
                   isActive
                     ? 'bg-primary/10 text-primary border border-primary/20'
                     : 'text-muted-foreground hover:bg-accent hover:text-foreground'
@@ -104,21 +104,21 @@ export function DashboardLayout() {
             </div>
             <button
               onClick={toggleTheme}
-              className="p-1 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+              className="p-2.5 rounded-md hover:bg-accent active:bg-accent/80 text-muted-foreground hover:text-foreground transition-colors"
               title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
             >
               {theme === 'dark' ? (
-                <Sun className="h-3.5 w-3.5" />
+                <Sun className="h-4 w-4" />
               ) : (
-                <Moon className="h-3.5 w-3.5" />
+                <Moon className="h-4 w-4" />
               )}
             </button>
           </div>
           <button
             onClick={signOut}
-            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors w-full"
+            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground active:text-foreground/80 transition-colors w-full py-2"
           >
-            <LogOut className="h-3 w-3" />
+            <LogOut className="h-3.5 w-3.5" />
             <span className="truncate">{session?.user?.email || "Sign out"}</span>
           </button>
         </div>
@@ -130,7 +130,7 @@ export function DashboardLayout() {
         <div className="sticky top-0 z-30 flex items-center h-14 px-4 border-b bg-card lg:hidden">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-1.5 rounded-md hover:bg-accent mr-3"
+            className="p-2.5 rounded-md hover:bg-accent active:bg-accent/80 mr-3"
           >
             <Menu className="h-5 w-5" />
           </button>

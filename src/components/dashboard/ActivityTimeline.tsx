@@ -116,7 +116,7 @@ export function ActivityTimeline() {
       <div className="px-4 py-3.5 border-b bg-accent/30 flex items-center gap-2">
         <Clock className="h-4 w-4 text-primary" />
         <h2 className="text-sm font-bold">Activity</h2>
-        <span className="text-[10px] font-medium text-muted-foreground bg-background px-1.5 py-0.5 rounded ml-auto">24h</span>
+        <span className="text-xs font-medium text-muted-foreground bg-background px-1.5 py-0.5 rounded ml-auto">24h</span>
       </div>
 
       <div className="p-4">
@@ -152,7 +152,7 @@ export function ActivityTimeline() {
                       </span>
                     </div>
                   </div>
-                  <span className="text-[10px] font-mono text-muted-foreground whitespace-nowrap">
+                  <span className="text-xs font-mono text-muted-foreground whitespace-nowrap">
                     {formatDateTime(event.timestamp)}
                   </span>
                 </div>

@@ -99,7 +99,7 @@ export function TopMovers() {
       <div className="px-4 py-3.5 border-b bg-accent/30 flex items-center gap-2">
         <Flame className="h-4 w-4 text-primary" />
         <h2 className="text-sm font-bold">Top Movers</h2>
-        <span className="text-[10px] font-medium text-muted-foreground bg-background px-1.5 py-0.5 rounded ml-auto">24h</span>
+        <span className="text-xs font-medium text-muted-foreground bg-background px-1.5 py-0.5 rounded ml-auto">24h</span>
       </div>
 
       <div className="p-4">

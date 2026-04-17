@@ -45,7 +45,7 @@ export function Login() {
         <div className="text-center mb-8">
           <img src={logoIcon} alt="" className="h-16 w-auto mx-auto mb-3" />
           <h1 className="text-sm font-bold tracking-tight uppercase">Street Insights</h1>
-          <p className="text-[10px] text-muted-foreground tracking-wider uppercase mt-0.5">
+          <p className="text-xs text-muted-foreground tracking-wider uppercase mt-0.5">
             Boxford Partners
           </p>
         </div>
@@ -66,7 +66,7 @@ export function Login() {
           )}
 
           <div className="space-y-1">
-            <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
+            <label className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
               Email
             </label>
             <input
@@ -80,7 +80,7 @@ export function Login() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
+            <label className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
               Password
             </label>
             <input

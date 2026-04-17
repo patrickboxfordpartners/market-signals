@@ -25,7 +25,9 @@ interface VolumeSpikeAnalysisChartProps {
   height?: number;
 }
 
-export function VolumeSpikeAnalysisChart({ data, height = 500 }: VolumeSpikeAnalysisChartProps) {
+export function VolumeSpikeAnalysisChart({ data, height: heightProp }: VolumeSpikeAnalysisChartProps) {
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const height = heightProp ?? (isMobile ? 300 : 500);
   const chartData = useMemo(() => {
     if (data.length === 0) return [];
 
