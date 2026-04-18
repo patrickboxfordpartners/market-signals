@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useAuth } from "../hooks/useAuth"
-import { Navigate } from "react-router-dom"
+import { Navigate, Link } from "react-router-dom"
 import { Lock } from "lucide-react"
 import logoIcon from "../assets/logo-icon.png"
 
@@ -80,9 +80,17 @@ export function Login() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
-              Password
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
+                Password
+              </label>
+              <Link
+                to="/forgot-password"
+                className="text-xs text-muted-foreground hover:text-primary transition-colors"
+              >
+                Forgot password?
+              </Link>
+            </div>
             <input
               type="password"
               value={password}
@@ -101,6 +109,13 @@ export function Login() {
             {submitting ? "Signing in..." : "Sign In"}
           </button>
         </form>
+
+        <p className="text-xs text-center text-muted-foreground mt-4">
+          Don't have an account?{" "}
+          <Link to="/sign-up" className="text-primary hover:underline">
+            Sign up
+          </Link>
+        </p>
       </div>
     </div>
   )

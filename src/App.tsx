@@ -9,6 +9,9 @@ import { TickerDetail } from './pages/TickerDetail'
 import { PredictionsTracker } from './pages/PredictionsTracker'
 import { LiveSignals } from './pages/LiveSignals'
 import { Login } from './pages/Login'
+import { SignUp } from './pages/SignUp'
+import { ForgotPassword } from './pages/ForgotPassword'
+import { ResetPassword } from './pages/ResetPassword'
 import AlertPreferences from './pages/AlertPreferences'
 import AlertHistory from './pages/AlertHistory'
 import MLSignals from './pages/MLSignals'
@@ -71,6 +74,9 @@ function App() {
           <AuthProvider>
             <Routes>
               <Route path="/login" element={<Login />} />
+              <Route path="/sign-up" element={<SignUp />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route
                 path="/"
                 element={

@@ -1,0 +1,1 @@
+{"Version":"2012-10-17","Statement":[{"Sid":"AllowSESPut","Effect":"Allow","Principal":{"Service":"ses.amazonaws.com"},"Action":"s3:PutObject","Resource":"arn:aws:s3:::mailboxford-inbound-emails/*","Condition":{"StringEquals":{"AWS:SourceAccount":"905543839483"}}}]}
