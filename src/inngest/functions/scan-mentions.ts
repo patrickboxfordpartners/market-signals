@@ -102,45 +102,8 @@ export const scanMentions = inngest.createFunction(
 
     const tickerSymbols = activeTickers.map(t => t.symbol);
 
-    // Scan Twitter
-    const twitterMentions = await step.run("scan-twitter", async () => {
-      if (!TWITTER_BEARER_TOKEN) {
-        console.warn("Twitter bearer token not configured");
-        return [];
-      }
-
-      const mentions: TwitterMention[] = [];
-
-      for (const symbol of tickerSymbols) {
-        try {
-          const query = `$${symbol} OR ${symbol}`;
-          const response = await fetch(
-            `https://api.twitter.com/2/tweets/search/recent?query=${encodeURIComponent(query)}&max_results=10&tweet.fields=created_at,public_metrics,author_id&expansions=author_id&user.fields=username,name,public_metrics`,
-            {
-              headers: {
-                Authorization: `Bearer ${TWITTER_BEARER_TOKEN}`,
-              },
-            }
-          );
-
-          if (!response.ok) {
-            console.error(`Twitter API error for ${symbol}:`, response.status);
-            continue;
-          }
-
-          const data = await response.json();
-          if (data.data) {
-            mentions.push(...data.data);
-          }
-
-          await new Promise(resolve => setTimeout(resolve, 250));
-        } catch (error) {
-          console.error(`Error scanning Twitter for ${symbol}:`, error);
-        }
-      }
-
-      return mentions;
-    });
+    // Twitter search requires Pro tier ($5K/mo) — disabled
+    const twitterMentions: TwitterMention[] = [];
 
     // Scan Reddit
     const redditMentions = await step.run("scan-reddit", async () => {
@@ -215,7 +178,7 @@ export const scanMentions = inngest.createFunction(
       const articles: NewsArticle[] = [];
 
       const popularTickers = ['NVDA', 'TSLA', 'AAPL', 'MSFT', 'GOOGL', 'META', 'AMD', 'COIN', 'PLTR', 'GME'];
-      const tickersToQuery = tickerSymbols.filter(s => popularTickers.includes(s)).slice(0, 10);
+      const tickersToQuery = tickerSymbols.filter(s => popularTickers.includes(s)).slice(0, 3);
 
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
@@ -550,16 +513,12 @@ export const scanMentions = inngest.createFunction(
         }
       }
 
-      // Upsert to handle duplicates (same ticker + platform + url)
       if (mentionsToStore.length > 0) {
         const { error } = await supabase
           .from("mentions")
-          .upsert(mentionsToStore, {
-            onConflict: "ticker_id,platform,url",
-            ignoreDuplicates: true,
-          });
+          .insert(mentionsToStore);
 
-        if (error) {
+        if (error && error.code !== "23505") {
           console.error("Error storing mentions:", error);
           return { stored: 0 };
         }
