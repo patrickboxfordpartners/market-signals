@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../integrations/supabase/client'
-import { TrendingUp, Users, FileText, CheckCircle, Activity, Radio } from 'lucide-react'
+import { TrendingUp, Users, FileText, CheckCircle, Activity, Radio, Star, AlertTriangle } from 'lucide-react'
 import { formatNumber, formatDateTime } from '../lib/utils'
 import { SystemStatus } from '../components/dashboard/SystemStatus'
 import { TopMovers } from '../components/dashboard/TopMovers'
 import { ActivityTimeline } from '../components/dashboard/ActivityTimeline'
+import { SectorHeatMap } from '../components/dashboard/SectorHeatMap'
+import { useWatchlist } from '../hooks/useWatchlist'
 
 interface Stats {
   totalMentions: number
@@ -32,11 +35,62 @@ export function Overview() {
   const [recentMentions, setRecentMentions] = useState<RecentMention[]>([])
   const [loading, setLoading] = useState(true)
   const [lastScanTime, setLastScanTime] = useState<string | undefined>()
+  const [watchlistTickers, setWatchlistTickers] = useState<Array<{
+    id: string; symbol: string; company_name: string | null;
+    mention_count: number; spike_detected: boolean
+  }>>([])
+  const { watchlist } = useWatchlist()
 
   useEffect(() => {
     fetchStats()
     fetchRecentMentions()
 
+    if (watchlist.size > 0) {
+      fetchWatchlistTickers()
+    } else {
+      setWatchlistTickers([])
+    }
+  }, [watchlist])
+
+  async function fetchWatchlistTickers() {
+    const ids = Array.from(watchlist)
+    const { data } = await supabase
+      .from('tickers')
+      .select('id, symbol, company_name')
+      .in('id', ids)
+      .eq('is_active', true)
+
+    if (!data) return
+
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 3)
+
+    const enriched = await Promise.all(data.map(async t => {
+      const { count } = await supabase
+        .from('mentions')
+        .select('*', { count: 'exact', head: true })
+        .eq('ticker_id', t.id)
+        .gte('mentioned_at', thirtyDaysAgo.toISOString())
+
+      const { data: freq } = await supabase
+        .from('mention_frequency')
+        .select('spike_detected')
+        .eq('ticker_id', t.id)
+        .eq('spike_detected', true)
+        .gte('date', thirtyDaysAgo.toISOString().split('T')[0])
+        .limit(1)
+
+      return {
+        ...t,
+        mention_count: count || 0,
+        spike_detected: (freq || []).length > 0,
+      }
+    }))
+
+    setWatchlistTickers(enriched.sort((a, b) => b.mention_count - a.mention_count))
+  }
+
+  useEffect(() => {
     const subscription = supabase
       .channel('mentions-changes')
       .on(
@@ -163,6 +217,41 @@ export function Overview() {
         <TopMovers />
         <ActivityTimeline />
       </div>
+
+      {/* Sector Heat Map */}
+      <SectorHeatMap />
+
+      {/* Watchlist */}
+      {watchlistTickers.length > 0 && (
+        <div className="bg-card rounded-lg border shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b bg-accent/30 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+              <h2 className="text-base font-bold">Your Watchlist</h2>
+            </div>
+            <Link to="/tickers" className="text-xs text-primary hover:underline">Manage</Link>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px divide-x divide-y">
+            {watchlistTickers.map(t => (
+              <Link
+                key={t.id}
+                to={`/tickers/${t.symbol}`}
+                className="p-4 hover:bg-accent/50 transition-colors"
+              >
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-sm font-bold font-mono">${t.symbol}</span>
+                  {t.spike_detected && (
+                    <AlertTriangle className="h-3 w-3 text-red-500" />
+                  )}
+                </div>
+                <div className="text-xs text-muted-foreground truncate">{t.company_name || ''}</div>
+                <div className="text-lg font-bold font-mono mt-1">{formatNumber(t.mention_count)}</div>
+                <div className="text-xs text-muted-foreground">3d mentions</div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Recent Mentions */}
       <div className="bg-card rounded-lg border shadow-sm overflow-hidden">

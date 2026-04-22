@@ -16,6 +16,10 @@ interface AlertPreferences {
   email_address: string;
   webhook_enabled: boolean;
   webhook_url: string;
+  telegram_enabled: boolean;
+  telegram_chat_id: string;
+  discord_enabled: boolean;
+  discord_webhook_url: string;
 }
 
 export default function AlertPreferences() {
@@ -35,6 +39,10 @@ export default function AlertPreferences() {
     email_address: user?.email || "",
     webhook_enabled: false,
     webhook_url: "",
+    telegram_enabled: false,
+    telegram_chat_id: "",
+    discord_enabled: false,
+    discord_webhook_url: "",
   });
 
   useEffect(() => {
@@ -306,6 +314,54 @@ export default function AlertPreferences() {
                 />
                 <p className="text-sm text-gray-400 mt-1">
                   POST requests will be sent to this URL with alert data
+                </p>
+              </div>
+
+              {/* Telegram */}
+              <div className="border border-border rounded-lg p-4">
+                <label className="flex items-center gap-3 mb-3">
+                  <input
+                    type="checkbox"
+                    checked={preferences.telegram_enabled}
+                    onChange={(e) => setPreferences({ ...preferences, telegram_enabled: e.target.checked })}
+                    className="w-4 h-4 rounded border-gray-600 bg-gray-700 text-emerald-600 focus:ring-emerald-500"
+                  />
+                  <span className="font-medium">Telegram Notifications</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Your Telegram Chat ID (e.g. -1001234567890)"
+                  value={preferences.telegram_chat_id}
+                  onChange={(e) => setPreferences({ ...preferences, telegram_chat_id: e.target.value })}
+                  disabled={!preferences.telegram_enabled}
+                  className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+                <p className="text-sm text-gray-400 mt-1">
+                  Start a chat with @StreetInsightsBot, then paste your Chat ID here
+                </p>
+              </div>
+
+              {/* Discord */}
+              <div className="border border-border rounded-lg p-4">
+                <label className="flex items-center gap-3 mb-3">
+                  <input
+                    type="checkbox"
+                    checked={preferences.discord_enabled}
+                    onChange={(e) => setPreferences({ ...preferences, discord_enabled: e.target.checked })}
+                    className="w-4 h-4 rounded border-gray-600 bg-gray-700 text-emerald-600 focus:ring-emerald-500"
+                  />
+                  <span className="font-medium">Discord Notifications</span>
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://discord.com/api/webhooks/..."
+                  value={preferences.discord_webhook_url}
+                  onChange={(e) => setPreferences({ ...preferences, discord_webhook_url: e.target.value })}
+                  disabled={!preferences.discord_enabled}
+                  className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+                <p className="text-sm text-gray-400 mt-1">
+                  Create a webhook in your Discord server settings and paste the URL here
                 </p>
               </div>
             </div>

@@ -15,6 +15,9 @@ import { ResetPassword } from './pages/ResetPassword'
 import AlertPreferences from './pages/AlertPreferences'
 import AlertHistory from './pages/AlertHistory'
 import MLSignals from './pages/MLSignals'
+import { ContentDrafts } from './pages/ContentDrafts'
+import { PublicLeaderboard } from './pages/PublicLeaderboard'
+import { Backtest } from './pages/Backtest'
 import { Analytics } from '@vercel/analytics/react'
 import * as Sentry from '@sentry/react'
 import logoIcon from './assets/logo-icon.png'
@@ -73,6 +76,7 @@ function App() {
         <ThemeProvider>
           <AuthProvider>
             <Routes>
+              <Route path="/leaderboard" element={<PublicLeaderboard />} />
               <Route path="/login" element={<Login />} />
               <Route path="/sign-up" element={<SignUp />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -94,6 +98,8 @@ function App() {
                 <Route path="ml-signals" element={<MLSignals />} />
                 <Route path="alerts" element={<AlertPreferences />} />
                 <Route path="alerts/history" element={<AlertHistory />} />
+                <Route path="drafts" element={<ContentDrafts />} />
+                <Route path="backtest" element={<Backtest />} />
               </Route>
             </Routes>
             <Analytics />

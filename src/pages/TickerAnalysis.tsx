@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../integrations/supabase/client'
-import { Activity, TrendingUp, AlertTriangle, Plus, X, Edit2, Trash2, Upload } from 'lucide-react'
+import { Activity, TrendingUp, AlertTriangle, Plus, X, Edit2, Trash2, Upload, Search, Layers, ArrowUpDown, Star } from 'lucide-react'
 import { formatNumber, formatDate } from '../lib/utils'
 import { AreaChart, Area, ResponsiveContainer } from 'recharts'
+import { useWatchlist } from '../hooks/useWatchlist'
 
 interface TickerStat {
   id: string
@@ -37,6 +38,10 @@ export function TickerAnalysis() {
   const [showBulkImport, setShowBulkImport] = useState(false)
   const [bulkSymbols, setBulkSymbols] = useState('')
   const [importingBulk, setImportingBulk] = useState(false)
+  const { watchlist, toggle: toggleWatchlist } = useWatchlist()
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sectorFilter, setSectorFilter] = useState<string>('all')
+  const [sortBy, setSortBy] = useState<'mentions' | 'velocity' | 'symbol'>('mentions')
 
   useEffect(() => {
     fetchTickers()
@@ -263,6 +268,32 @@ export function TickerAnalysis() {
     setLoading(false)
   }
 
+  const sectors = useMemo(() => {
+    const s = new Set(tickers.map(t => t.sector).filter(Boolean) as string[])
+    return ['all', ...Array.from(s).sort()]
+  }, [tickers])
+
+  const filteredTickers = useMemo(() => {
+    let result = tickers.filter(t => {
+      const matchesSearch = !searchQuery ||
+        t.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (t.company_name || '').toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesSector = sectorFilter === 'all' || t.sector === sectorFilter
+      return matchesSearch && matchesSector
+    })
+    if (sortBy === 'symbol') {
+      result = [...result].sort((a, b) => a.symbol.localeCompare(b.symbol))
+    } else if (sortBy === 'velocity') {
+      result = [...result].sort((a, b) => {
+        const aVel = a.sparkline.length >= 2 ? a.sparkline[a.sparkline.length - 1].count - a.sparkline[a.sparkline.length - 2].count : 0
+        const bVel = b.sparkline.length >= 2 ? b.sparkline[b.sparkline.length - 1].count - b.sparkline[b.sparkline.length - 2].count : 0
+        return bVel - aVel
+      })
+    }
+    // default: mentions (already sorted by fetchTickers)
+    return result
+  }, [tickers, searchQuery, sectorFilter, sortBy])
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -277,7 +308,7 @@ export function TickerAnalysis() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Tickers</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Mention frequency and spike detection — {tickers.length} tracked
+            Mention frequency and spike detection — {filteredTickers.length} of {tickers.length} tracked
           </p>
         </div>
         <div className="flex gap-2">
@@ -298,10 +329,48 @@ export function TickerAnalysis() {
         </div>
       </div>
 
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3 items-center">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search tickers..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-3 py-2 bg-background border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Layers className="h-4 w-4 text-muted-foreground" />
+          <select
+            value={sectorFilter}
+            onChange={(e) => setSectorFilter(e.target.value)}
+            className="px-3 py-2 bg-background border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            {sectors.map(s => (
+              <option key={s} value={s}>{s === 'all' ? 'All Sectors' : s}</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as 'mentions' | 'velocity' | 'symbol')}
+            className="px-3 py-2 bg-background border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            <option value="mentions">Sort: Total Mentions</option>
+            <option value="velocity">Sort: Recent Velocity</option>
+            <option value="symbol">Sort: Symbol A–Z</option>
+          </select>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Main list */}
         <div className="lg:col-span-2 space-y-3">
-          {tickers.map((ticker) => (
+          {filteredTickers.map((ticker) => (
             <div key={ticker.id} className="relative group">
               <Link
                 to={`/tickers/${ticker.symbol}`}
@@ -374,6 +443,13 @@ export function TickerAnalysis() {
               </Link>
               <div className="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleWatchlist(ticker.id) }}
+                  className={`p-2.5 rounded-md bg-card border transition-colors ${watchlist.has(ticker.id) ? 'text-yellow-500 hover:bg-yellow-500/10' : 'hover:bg-accent active:bg-accent/80'}`}
+                  title={watchlist.has(ticker.id) ? 'Remove from watchlist' : 'Add to watchlist'}
+                >
+                  <Star className={`h-4 w-4 ${watchlist.has(ticker.id) ? 'fill-current' : ''}`} />
+                </button>
+                <button
                   onClick={(e) => openEditModal(ticker, e)}
                   className="p-2.5 rounded-md bg-card border hover:bg-accent active:bg-accent/80 transition-colors"
                   title="Edit ticker"
@@ -391,7 +467,7 @@ export function TickerAnalysis() {
             </div>
           ))}
 
-          {tickers.length === 0 && (
+          {filteredTickers.length === 0 && (
             <div className="bg-card rounded-lg border shadow-sm p-16 text-center">
               <TrendingUp className="h-10 w-10 mx-auto mb-4 text-muted-foreground opacity-30" />
               <h3 className="text-base font-bold mb-2">No Tickers</h3>

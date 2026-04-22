@@ -16,10 +16,12 @@ interface MLPrediction {
 
 interface ModelMetrics {
   model_type: string;
+  model_version: string | null;
   accuracy: number | null;
   precision: number | null;
   recall: number | null;
   f1_score: number | null;
+  trained_at: string | null;
 }
 
 export default function MLSignals() {
@@ -57,7 +59,7 @@ export default function MLSignals() {
       // Fetch model metrics
       const { data: modelMetrics } = await supabase
         .from("model_configs")
-        .select("model_type, accuracy, precision, recall, f1_score")
+        .select("model_type, model_version, accuracy, precision, recall, f1_score, trained_at")
         .eq("is_active", true)
         .order("trained_at", { ascending: false });
 
@@ -135,7 +137,19 @@ export default function MLSignals() {
         {/* Model Performance */}
         {activeMetric && (
           <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
-            <h2 className="text-lg font-semibold mb-4">Model Performance</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Model Performance</h2>
+              <div className="flex items-center gap-3 text-xs text-gray-400">
+                {activeMetric.model_version && (
+                  <span className="font-mono bg-gray-700 px-2 py-1 rounded">
+                    v{activeMetric.model_version}
+                  </span>
+                )}
+                {activeMetric.trained_at && (
+                  <span>Trained {new Date(activeMetric.trained_at).toLocaleDateString()}</span>
+                )}
+              </div>
+            </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
                 <div className="text-sm text-gray-400 mb-1">Accuracy</div>

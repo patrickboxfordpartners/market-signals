@@ -1,6 +1,6 @@
 import { inngest } from "../client.js";
 import { supabase } from "../../integrations/supabase/client.js";
-import { sendEmail, sendWebhook } from "../../lib/email.js";
+import { sendEmail, sendWebhook, sendTelegram, sendDiscord } from "../../lib/email.js";
 
 interface SpikeEvent {
   spike_ids: string[];
@@ -103,6 +103,26 @@ export const sendSpikeAlerts = inngest.createFunction(
             deliveryStatus = "failed";
             deliveryError = result.error || null;
           }
+        }
+        // Telegram
+        else if ((pref as any).telegram_enabled && (pref as any).telegram_chat_id) {
+          deliveryChannel = "telegram";
+          const result = await sendTelegram(
+            (pref as any).telegram_chat_id,
+            `*${subject}*\n\n${message}`
+          );
+          deliveryStatus = result.success ? "sent" : "failed";
+          deliveryError = result.error || null;
+        }
+        // Discord
+        else if ((pref as any).discord_enabled && (pref as any).discord_webhook_url) {
+          deliveryChannel = "discord";
+          const result = await sendDiscord(
+            (pref as any).discord_webhook_url,
+            `**${subject}**\n\`\`\`\n${message}\n\`\`\``
+          );
+          deliveryStatus = result.success ? "sent" : "failed";
+          deliveryError = result.error || null;
         }
 
         // Log the alert

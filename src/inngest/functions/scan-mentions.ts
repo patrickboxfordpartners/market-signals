@@ -65,6 +65,17 @@ interface FinnhubArticle {
   url: string;
 }
 
+interface StockTwitsMessage {
+  id: number;
+  body: string;
+  created_at: string;
+  user: { username: string; name: string; followers: number };
+  likes: { total: number };
+  reshares: { reshared_count: number };
+  symbols: Array<{ symbol: string }>;
+  sentiment?: { basic: "Bullish" | "Bearish" };
+}
+
 // Require $ prefix OR match against known symbols list to avoid false positives
 // Words like ALL, ON, IT, NOW etc. will only match with $ prefix
 const CASHTAG_REGEX = /\$([A-Z]{1,5})(?![a-z])/g;
@@ -104,6 +115,41 @@ export const scanMentions = inngest.createFunction(
 
     // Twitter search requires Pro tier ($5K/mo) — disabled
     const twitterMentions: TwitterMention[] = [];
+
+    // Scan StockTwits (free public API, no auth required)
+    const stockTwitsMentions = await step.run("scan-stocktwits", async () => {
+      const messages: StockTwitsMessage[] = [];
+
+      // Focus on highest-volume tickers to stay within rate limits
+      const priorityTickers = tickerSymbols.slice(0, 20);
+
+      for (const symbol of priorityTickers) {
+        try {
+          const response = await fetch(
+            `https://api.stocktwits.com/api/2/streams/symbol/${symbol}.json?limit=30`,
+            { headers: { "User-Agent": "market-signals/1.0" } }
+          );
+
+          if (!response.ok) {
+            if (response.status === 429) break; // Rate limited — stop early
+            continue;
+          }
+
+          const data = await response.json();
+          if (data.messages) {
+            for (const msg of data.messages) {
+              messages.push({ ...msg, symbols: msg.symbols || [{ symbol }] });
+            }
+          }
+
+          await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (error) {
+          console.error(`StockTwits error for ${symbol}:`, error);
+        }
+      }
+
+      return messages;
+    });
 
     // Scan Reddit
     const redditMentions = await step.run("scan-reddit", async () => {
@@ -319,6 +365,9 @@ export const scanMentions = inngest.createFunction(
       for (const tweet of twitterMentions) {
         sourceKeys.add(`twitter:${tweet.author.username}`);
       }
+      for (const msg of stockTwitsMentions) {
+        sourceKeys.add(`stocktwits:${msg.user.username}`);
+      }
       for (const post of redditMentions) {
         sourceKeys.add(`reddit:${post.author}`);
       }
@@ -370,6 +419,12 @@ export const scanMentions = inngest.createFunction(
                 name = tweet.author.name;
                 followerCount = tweet.author.followers_count;
               }
+            } else if (s.platform === "stocktwits") {
+              const msg = stockTwitsMentions.find(m => m.user.username === s.username);
+              if (msg) {
+                name = msg.user.name || s.username;
+                followerCount = msg.user.followers || 0;
+              }
             } else if (s.platform === "news") {
               sourceType = "publication";
             }
@@ -413,6 +468,27 @@ export const scanMentions = inngest.createFunction(
               tweet.public_metrics.like_count +
               tweet.public_metrics.retweet_count +
               tweet.public_metrics.reply_count,
+          });
+        }
+      }
+
+      // Process StockTwits messages
+      for (const msg of stockTwitsMentions) {
+        const symbols = msg.symbols?.map(s => s.symbol) || extractTickers(msg.body, tickerSymbols);
+        for (const symbol of symbols) {
+          if (!tickerSymbols.includes(symbol)) continue;
+          const ticker = activeTickers.find(t => t.symbol === symbol);
+          const sourceId = sourceMap.get(`stocktwits:${msg.user.username}`);
+          if (!ticker || !sourceId) continue;
+
+          mentionsToStore.push({
+            ticker_id: ticker.id,
+            source_id: sourceId,
+            content: msg.body,
+            url: `https://stocktwits.com/${msg.user.username}/message/${msg.id}`,
+            platform: "stocktwits",
+            mentioned_at: msg.created_at,
+            engagement_score: (msg.likes?.total || 0) + (msg.reshares?.reshared_count || 0),
           });
         }
       }
@@ -540,6 +616,13 @@ export const scanMentions = inngest.createFunction(
           completed_at: new Date().toISOString(),
         },
         {
+          scan_type: "stocktwits",
+          status: "success",
+          mentions_found: stockTwitsMentions.length,
+          error_message: null,
+          completed_at: new Date().toISOString(),
+        },
+        {
           scan_type: "reddit",
           status: !REDDIT_CLIENT_ID ? "skipped" : redditMentions.length >= 0 ? "success" : "error",
           mentions_found: redditMentions.length,
@@ -575,6 +658,7 @@ export const scanMentions = inngest.createFunction(
     return {
       tickers_scanned: tickerSymbols.length,
       twitter_mentions: twitterMentions.length,
+      stocktwits_mentions: stockTwitsMentions.length,
       reddit_mentions: redditMentions.length,
       news_articles: newsArticles.length,
       finnhub_articles: finnhubArticles.length,

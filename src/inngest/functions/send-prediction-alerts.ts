@@ -1,6 +1,6 @@
 import { inngest } from "../client.js";
 import { supabase } from "../../integrations/supabase/client.js";
-import { sendEmail, sendWebhook } from "../../lib/email.js";
+import { sendEmail, sendWebhook, sendTelegram, sendDiscord } from "../../lib/email.js";
 
 interface PredictionEvent {
   prediction_ids: string[];
@@ -114,6 +114,24 @@ export const sendPredictionAlerts = inngest.createFunction(
             deliveryError = result.error || null;
           }
         }
+        else if ((pref as any).telegram_enabled && (pref as any).telegram_chat_id) {
+          deliveryChannel = "telegram";
+          const result = await sendTelegram(
+            (pref as any).telegram_chat_id,
+            `*${subject}*\n\n${message}`
+          );
+          deliveryStatus = result.success ? "sent" : "failed";
+          deliveryError = result.error || null;
+        }
+        else if ((pref as any).discord_enabled && (pref as any).discord_webhook_url) {
+          deliveryChannel = "discord";
+          const result = await sendDiscord(
+            (pref as any).discord_webhook_url,
+            `**${subject}**\n\`\`\`\n${message}\n\`\`\``
+          );
+          deliveryStatus = result.success ? "sent" : "failed";
+          deliveryError = result.error || null;
+        }
 
         // Log the alert
         const { error: logError } = await supabase.from("alert_log").insert({
@@ -143,10 +161,57 @@ export const sendPredictionAlerts = inngest.createFunction(
       });
     }
 
+    // Also alert users who follow the source that made these predictions
+    const followAlertsSent = await step.run("send-follow-alerts", async () => {
+      const sourceIds = [...new Set(predictionData.map((p: any) => p.source_id).filter(Boolean))];
+      if (sourceIds.length === 0) return 0;
+
+      const { data: followers } = await supabase
+        .from("source_follows")
+        .select("user_id, source_id, auth_users:user_id(email)")
+        .in("source_id", sourceIds);
+
+      if (!followers || followers.length === 0) return 0;
+
+      let sent = 0;
+      for (const follow of followers) {
+        const sourcePreds = predictionData.filter((p: any) => p.source_id === follow.source_id);
+        if (sourcePreds.length === 0) continue;
+
+        const source = (sourcePreds[0] as any).sources as any;
+        const subject = `Followed source alert: ${source?.name || "Unknown"} made ${sourcePreds.length} new prediction(s)`;
+        const message = sourcePreds.map((p: any) => {
+          const ticker = p.tickers as any;
+          return `${ticker?.symbol || "Unknown"}: ${p.sentiment} (${p.confidence_level} confidence)`;
+        }).join("\n");
+
+        const userEmail = (follow as any).auth_users?.email;
+        if (userEmail) {
+          const result = await sendEmail({ to: userEmail, subject, text: message });
+          if (result.success) {
+            await supabase.from("alert_log").insert({
+              alert_type: "prediction",
+              user_id: follow.user_id,
+              ticker_symbol: ticker_symbols.join(", "),
+              subject,
+              message,
+              metadata: { source_follow: true, source_id: follow.source_id },
+              status: "sent",
+              delivery_channel: "email",
+              sent_at: new Date().toISOString(),
+            });
+            sent++;
+          }
+        }
+      }
+      return sent;
+    });
+
     return {
       status: "completed",
       predictions_alerted: prediction_ids.length,
       alerts_sent: alertsSent,
+      follow_alerts_sent: followAlertsSent,
     };
   }
 );

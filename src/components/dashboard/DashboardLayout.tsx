@@ -13,6 +13,8 @@ import {
   Sun,
   Bell,
   Sparkles,
+  FileEdit,
+  FlaskConical,
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { MarketTicker } from './MarketTicker'
@@ -28,7 +30,9 @@ const navigation = [
   { name: 'Tickers', href: '/tickers', icon: TrendingUp },
   { name: 'Predictions', href: '/predictions', icon: Target },
   { name: 'Sources', href: '/sources', icon: Users },
+  { name: 'Backtest', href: '/backtest', icon: FlaskConical },
   { name: 'Alerts', href: '/alerts', icon: Bell },
+  { name: 'Drafts', href: '/drafts', icon: FileEdit },
 ]
 
 export function DashboardLayout() {

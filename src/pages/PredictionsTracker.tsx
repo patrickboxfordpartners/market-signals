@@ -18,6 +18,8 @@ interface Prediction {
   validated: boolean
   was_correct: boolean | null
   accuracy_score: number | null
+  earnings_window: boolean | null
+  earnings_date: string | null
 }
 
 export function PredictionsTracker() {
@@ -42,6 +44,8 @@ export function PredictionsTracker() {
         reasoning_quality_score,
         prediction_date,
         target_date,
+        earnings_window,
+        earnings_date,
         tickers (symbol),
         sources (name, credibility_score),
         validations (was_correct, accuracy_score)
@@ -65,6 +69,8 @@ export function PredictionsTracker() {
         validated: !!p.validations,
         was_correct: p.validations?.was_correct || null,
         accuracy_score: p.validations?.accuracy_score || null,
+        earnings_window: p.earnings_window || null,
+        earnings_date: p.earnings_date || null,
       }))
 
       const filtered =
@@ -261,6 +267,14 @@ export function PredictionsTracker() {
                               : 'border-border text-muted-foreground bg-accent/40'
                           }`}>
                             {prediction.confidence_level}
+                          </span>
+                        )}
+                        {prediction.earnings_window && (
+                          <span
+                            className="text-xs px-2 py-0.5 rounded-md border font-semibold border-orange-500/30 text-orange-500 bg-orange-500/10"
+                            title={prediction.earnings_date ? `Earnings: ${prediction.earnings_date}` : 'Near earnings'}
+                          >
+                            earnings window
                           </span>
                         )}
                       </div>

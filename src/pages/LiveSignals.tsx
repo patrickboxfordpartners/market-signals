@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../integrations/supabase/client'
-import { Activity, TrendingUp, TrendingDown, Minus, Radio } from 'lucide-react'
+import { Activity, TrendingUp, TrendingDown, Minus, Radio, Zap } from 'lucide-react'
 
 interface Signal {
   ticker_symbol: string
@@ -11,6 +11,7 @@ interface Signal {
   weighted_sentiment: number
   high_credibility_count: number
   total_predictions: number
+  has_unusual_options: boolean
 }
 
 export function LiveSignals() {
@@ -94,6 +95,17 @@ export function LiveSignals() {
         }
       })
 
+      // Check for unusual options flow in last 24h
+      const oneDayAgo = new Date()
+      oneDayAgo.setDate(oneDayAgo.getDate() - 1)
+      const { data: optionsActivity } = await (supabase as any)
+        .from('options_flow')
+        .select('symbol')
+        .gte('detected_at', oneDayAgo.toISOString())
+        .gte('unusual_score', 0.5)
+
+      const optionsSymbols = new Set((optionsActivity || []).map((o: any) => o.symbol))
+
       const signals: Signal[] = Array.from(tickerMap.values()).map((ticker) => ({
         ticker_symbol: ticker.ticker_symbol,
         company_name: ticker.company_name,
@@ -104,6 +116,7 @@ export function LiveSignals() {
           ticker.total_weight > 0 ? ticker.weighted_sentiment_sum / ticker.total_weight : 0,
         high_credibility_count: ticker.high_credibility_count,
         total_predictions: ticker.total_predictions,
+        has_unusual_options: optionsSymbols.has(ticker.ticker_symbol),
       }))
 
       signals.sort((a, b) => Math.abs(b.weighted_sentiment) - Math.abs(a.weighted_sentiment))
@@ -186,6 +199,15 @@ export function LiveSignals() {
                     <div className="hidden sm:block text-xs text-muted-foreground bg-accent px-2.5 py-1 rounded-md">
                       {signal.high_credibility_count} high-cred source{signal.high_credibility_count !== 1 ? 's' : ''}
                     </div>
+                    {signal.has_unusual_options && signal.high_credibility_count >= 2 && (
+                      <div
+                        className="hidden sm:flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-md bg-yellow-500/10 border border-yellow-500/30 text-yellow-500"
+                        title="Triple Confirmation: unusual options activity + high-credibility predictions + mention spike"
+                      >
+                        <Zap className="h-3 w-3 fill-current" />
+                        TRIPLE
+                      </div>
+                    )}
                   </div>
 
                   {/* Right: Signal gauge */}

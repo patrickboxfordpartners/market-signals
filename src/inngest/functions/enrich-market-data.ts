@@ -32,24 +32,36 @@ async function fetchMarketOverview(symbol: string): Promise<MarketData | null> {
   }
 
   try {
-    // Get quote data (includes volume, price, etc)
-    const quoteUrl = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`;
-    const quoteResponse = await fetch(quoteUrl);
-    const quoteData = await quoteResponse.json();
+    // Fetch daily time series — includes 20-day history to compute avg volume
+    const dailyUrl = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${symbol}&outputsize=compact&apikey=${ALPHA_VANTAGE_API_KEY}`;
+    const dailyResponse = await fetch(dailyUrl);
+    const dailyData = await dailyResponse.json();
 
-    if (quoteData["Global Quote"]) {
-      const quote = quoteData["Global Quote"];
-      return {
-        symbol,
-        volume: parseInt(quote["06. volume"] || "0"),
-        avg_volume: 0, // Will calculate from historical data
-        volume_ratio: 0,
-        price: parseFloat(quote["05. price"] || "0"),
-        price_change_percent: parseFloat(quote["10. change percent"]?.replace("%", "") || "0")
-      };
-    }
+    const timeSeries: Record<string, Record<string, string>> = dailyData["Time Series (Daily)"] || {};
+    const dates = Object.keys(timeSeries).sort().reverse(); // most recent first
 
-    return null;
+    if (dates.length === 0) return null;
+
+    const latest = timeSeries[dates[0]];
+    const currentVolume = parseInt(latest["5. volume"] || "0");
+    const currentPrice = parseFloat(latest["4. close"] || "0");
+    const prevPrice = dates[1] ? parseFloat(timeSeries[dates[1]]["4. close"] || "0") : currentPrice;
+    const priceChangePct = prevPrice > 0 ? ((currentPrice - prevPrice) / prevPrice) * 100 : 0;
+
+    // 20-day average volume
+    const volumeSample = dates.slice(0, 20).map(d => parseInt(timeSeries[d]["5. volume"] || "0"));
+    const avgVolume = volumeSample.length > 0
+      ? Math.round(volumeSample.reduce((a, b) => a + b, 0) / volumeSample.length)
+      : 0;
+
+    return {
+      symbol,
+      volume: currentVolume,
+      avg_volume: avgVolume,
+      volume_ratio: avgVolume > 0 ? currentVolume / avgVolume : 0,
+      price: currentPrice,
+      price_change_percent: priceChangePct,
+    };
   } catch (error) {
     console.error(`Error fetching market data for ${symbol}:`, error);
     return null;
@@ -174,7 +186,7 @@ export const enrichMarketData = inngest.createFunction(
           .gte("mentioned_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
 
         // Calculate correlation metrics
-        const hasVolumeSpike = market && market.volume > market.avg_volume * 1.5;
+        const hasVolumeSpike = market && market.avg_volume > 0 && market.volume_ratio >= 1.5;
         const hasPriceMove = market && Math.abs(market.price_change_percent) > 2;
         const hasNewsActivity = news.length > 5;
         const hasMentionActivity = (recentMentions || 0) > ticker.avg_daily_mentions * 1.3;
@@ -236,11 +248,59 @@ export const enrichMarketData = inngest.createFunction(
       });
     }
 
+    // Tag unvalidated predictions with earnings window proximity using FMP earnings calendar
+    const earningsTagged = await step.run("tag-earnings-window", async () => {
+      const FMP_API_KEY = process.env.FMP_API_KEY;
+      if (!FMP_API_KEY || FMP_API_KEY === "demo") return { tagged: 0 };
+
+      let tagged = 0;
+      const today = new Date();
+      const windowDays = 14;
+
+      for (const ticker of tickers) {
+        try {
+          const from = new Date(today); from.setDate(from.getDate() - windowDays);
+          const to = new Date(today); to.setDate(to.getDate() + windowDays);
+          const fromStr = from.toISOString().split("T")[0];
+          const toStr = to.toISOString().split("T")[0];
+
+          const res = await fetch(
+            `https://financialmodelingprep.com/api/v3/historical/earning_calendar/${ticker.symbol}?from=${fromStr}&to=${toStr}&apikey=${FMP_API_KEY}`
+          );
+          if (!res.ok) continue;
+
+          const events: Array<{ date: string }> = await res.json();
+          if (!events || events.length === 0) {
+            await new Promise(r => setTimeout(r, 300));
+            continue;
+          }
+
+          const earningsDate = events[0].date;
+
+          // Tag recent unvalidated predictions for this ticker
+          const { error } = await supabase
+            .from("predictions")
+            .update({ earnings_window: true, earnings_date: earningsDate })
+            .eq("ticker_id", ticker.id)
+            .is("earnings_window", null)
+            .gte("prediction_date", from.toISOString());
+
+          if (!error) tagged++;
+          await new Promise(r => setTimeout(r, 300));
+        } catch (err) {
+          console.error(`Earnings tag error for ${ticker.symbol}:`, err);
+        }
+      }
+
+      return { tagged };
+    });
+
     return {
       tickers_processed: tickers.length,
       market_data_fetched: Object.keys(marketData).length,
       news_items_fetched: Object.values(newsData).reduce((sum, items) => sum + items.length, 0),
       high_correlation_detected: highCorrelation.length,
+      earnings_tagged: earningsTagged.tagged,
       opportunities: highCorrelation.map(c => ({
         symbol: c.symbol,
         alignment_score: c.alignment_score,

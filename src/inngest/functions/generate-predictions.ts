@@ -1,7 +1,7 @@
 import { inngest } from "../client.js";
 import { supabase } from "../../integrations/supabase/client.js";
 import { extractFeatures } from "../../lib/ml-features.js";
-import { predict, DEFAULT_MODEL_CONFIG } from "../../lib/ml-model.js";
+import { predict, activeConfig, type ModelConfig } from "../../lib/ml-model.js";
 
 export const generatePredictions = inngest.createFunction(
   {
@@ -12,6 +12,20 @@ export const generatePredictions = inngest.createFunction(
   async ({ step }) => {
     const today = new Date();
     const predictionDate = today.toISOString();
+
+    // Load active model config from DB (falls back to DEFAULT if not found)
+    const activeConfig = await step.run("load-model-config", async () => {
+      const { data } = await supabase
+        .from("model_configs")
+        .select("config")
+        .eq("model_type", "price_movement_24h")
+        .eq("is_active", true)
+        .order("trained_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      return (data?.config as ModelConfig) || activeConfig;
+    });
 
     // Get active tickers
     const activeTickers = await step.run("fetch-active-tickers", async () => {
@@ -42,7 +56,7 @@ export const generatePredictions = inngest.createFunction(
         }
 
         // Generate 24h prediction
-        const prediction24h = predict(features, DEFAULT_MODEL_CONFIG);
+        const prediction24h = predict(features, activeConfig);
         const target24h = new Date(today);
         target24h.setDate(target24h.getDate() + 1);
 
@@ -56,7 +70,7 @@ export const generatePredictions = inngest.createFunction(
         });
 
         // Generate 7d prediction
-        const prediction7d = predict(features, DEFAULT_MODEL_CONFIG);
+        const prediction7d = predict(features, activeConfig);
         const target7d = new Date(today);
         target7d.setDate(target7d.getDate() + 7);
 
@@ -82,7 +96,7 @@ export const generatePredictions = inngest.createFunction(
         confidence_score: p.prediction.confidence,
         predicted_magnitude: p.prediction.magnitude,
         features: p.features,
-        model_version: DEFAULT_MODEL_CONFIG.version,
+        model_version: activeConfig.version,
         trained_at: new Date().toISOString(),
         prediction_date: predictionDate,
         target_date: p.target_date,
