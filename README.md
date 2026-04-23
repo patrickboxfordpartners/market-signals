@@ -1,5 +1,7 @@
 # Market Signals
 
+**[🔗 Live Application: getstreetinsights.com](https://getstreetinsights.com)**
+
 Stock sentiment tracking with credibility-weighted source analysis. Automatically detects ticker mention spikes, captures predictions with reasoning, validates outcomes, and builds source credibility scores over time.
 
 ## Architecture
