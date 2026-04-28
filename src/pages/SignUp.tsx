@@ -1,14 +1,16 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useAuth } from "../hooks/useAuth"
 import { Navigate, Link, useSearchParams } from "react-router-dom"
 import { UserPlus } from "lucide-react"
 import logoIcon from "../assets/logo-icon.png"
 import { supabase } from "../integrations/supabase/client"
+import { useBilling } from "../hooks/useBilling"
 
 export function SignUp() {
   const { session, loading } = useAuth()
   const [searchParams] = useSearchParams()
   const checkoutSuccess = searchParams.get("checkout") === "success"
+  const planFromUrl = searchParams.get("plan")
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -16,6 +18,8 @@ export function SignUp() {
   const [error, setError] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
+
+  const { startCheckout, loading: checkoutLoading } = useBilling()
 
   if (loading) {
     return (
@@ -27,7 +31,14 @@ export function SignUp() {
     )
   }
 
-  if (session) {
+  // If user is logged in and has a plan parameter, go to checkout
+  useEffect(() => {
+    if (session && planFromUrl) {
+      startCheckout(planFromUrl)
+    }
+  }, [session, planFromUrl])
+
+  if (session && !planFromUrl) {
     return <Navigate to="/" replace />
   }
 
@@ -49,7 +60,11 @@ export function SignUp() {
     try {
       const { error } = await supabase.auth.signUp({ email, password })
       if (error) throw error
-      setSuccess(true)
+
+      // If there's a plan in the URL, the useEffect will handle checkout after signup
+      if (!planFromUrl) {
+        setSuccess(true)
+      }
     } catch (err: any) {
       const msg = err.message || "Could not create account"
       if (msg.toLowerCase().includes("already registered") || msg.toLowerCase().includes("already in use")) {
@@ -170,10 +185,10 @@ export function SignUp() {
 
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || checkoutLoading}
             className="w-full bg-primary text-primary-foreground rounded-md py-2 text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
-            {submitting ? "Creating account..." : "Create Account"}
+            {checkoutLoading ? "Redirecting to checkout..." : submitting ? "Creating account..." : "Create Account"}
           </button>
         </form>
 

@@ -31,3 +31,4 @@ dist-ssr
 # Inngest
 .inngest
 .vercel
+.env.production.vercel
