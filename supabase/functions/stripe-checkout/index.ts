@@ -43,10 +43,16 @@ serve(async (req) => {
       });
     }
 
+    // Use service role to read/write billing fields
+    const supabaseAdmin = createClient(
+      supabaseUrl,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
     // Get user profile
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id")
+    const { data: profile } = await supabaseAdmin
+      .from("user_profiles")
+      .select("id, stripe_customer_id")
       .eq("id", user.id)
       .single();
 
@@ -56,12 +62,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    // Use service role to read/write billing fields
-    const supabaseAdmin = createClient(
-      supabaseUrl,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
 
     const { priceId, successUrl, cancelUrl } = await req.json();
 
@@ -85,7 +85,7 @@ serve(async (req) => {
       customerId = customer.id;
 
       await supabaseAdmin
-        .from("profiles")
+        .from("user_profiles")
         .update({ stripe_customer_id: customerId })
         .eq("id", user.id);
     }

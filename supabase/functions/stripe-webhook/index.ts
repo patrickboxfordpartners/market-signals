@@ -94,9 +94,9 @@ serve(async (req) => {
         const tier = getTierFromPrice(priceId);
 
         const { error } = await supabase
-          .from("profiles")
+          .from("user_profiles")
           .update({
-            subscription_tier: tier,
+            plan: tier,
             subscription_status: "active",
             stripe_customer_id: session.customer as string,
             stripe_subscription_id: subscription.id,
@@ -119,7 +119,7 @@ serve(async (req) => {
           // Fall back to looking up by stripe_customer_id
           const customerId = subscription.customer as string;
           const { data: profile } = await supabase
-            .from("profiles")
+            .from("user_profiles")
             .select("id")
             .eq("stripe_customer_id", customerId)
             .single();
@@ -134,9 +134,9 @@ serve(async (req) => {
           const status = mapSubscriptionStatus(subscription.status);
 
           await supabase
-            .from("profiles")
+            .from("user_profiles")
             .update({
-              subscription_tier: tier,
+              plan: tier,
               subscription_status: status,
               stripe_subscription_id: subscription.id,
             })
@@ -151,9 +151,9 @@ serve(async (req) => {
         const status = mapSubscriptionStatus(subscription.status);
 
         const { error } = await supabase
-          .from("profiles")
+          .from("user_profiles")
           .update({
-            subscription_tier: tier,
+            plan: tier,
             subscription_status: status,
             stripe_subscription_id: subscription.id,
           })
@@ -173,7 +173,7 @@ serve(async (req) => {
 
         // Look up by customer ID since sub is being deleted
         const { data: profile } = await supabase
-          .from("profiles")
+          .from("user_profiles")
           .select("id")
           .eq("stripe_customer_id", customerId)
           .single();
@@ -184,9 +184,9 @@ serve(async (req) => {
         }
 
         const { error } = await supabase
-          .from("profiles")
+          .from("user_profiles")
           .update({
-            subscription_tier: "free",
+            plan: "free",
             subscription_status: "canceled",
             stripe_subscription_id: null,
           })
