@@ -1,10 +1,10 @@
-import { useState } from "react";
-import { supabase } from "../lib/supabase";
+import { useState, useCallback } from "react";
+import { supabase } from "../integrations/supabase/client";
 
 export function useBilling() {
   const [loading, setLoading] = useState(false);
 
-  async function startCheckout(priceId: string) {
+  const startCheckout = useCallback(async function startCheckout(priceId: string) {
     if (!priceId) {
       console.error("[useBilling] No price ID provided");
       return;
@@ -52,7 +52,7 @@ export function useBilling() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
   return { startCheckout, loading };
 }
