@@ -85,7 +85,7 @@ export function Pricing() {
             {plans.map((plan) => (
               <div
                 key={plan.name}
-                className={`relative p-8 rounded-2xl ${
+                className={`relative p-8 rounded-2xl flex flex-col ${
                   plan.popular
                     ? "bg-gray-800 border-2 border-emerald-500"
                     : "bg-gray-900/50 border border-gray-800"
@@ -109,7 +109,7 @@ export function Pricing() {
                   </p>
                 </div>
 
-                <ul className="space-y-4 mb-8 text-left">
+                <ul className="space-y-4 mb-8 text-left flex-grow">
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-3">
                       <Check className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
