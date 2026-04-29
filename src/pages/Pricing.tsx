@@ -183,7 +183,7 @@ export function Pricing() {
                       <CheckIcon />
                       <span dangerouslySetInnerHTML={{ __html: feature }} />
                     </li>
-                  )}
+                  ))}
                 </ul>
 
                 <button
