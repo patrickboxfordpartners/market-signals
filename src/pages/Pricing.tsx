@@ -1,6 +1,5 @@
 import { Check } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
-import logoIcon from "../assets/logo-icon.png";
 
 const plans = [
   {
@@ -43,90 +42,104 @@ export function Pricing() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl">
-        {/* Logo */}
-        <div className="text-center mb-12">
-          <img src={logoIcon} alt="" className="h-16 w-auto mx-auto mb-3" />
-          <h1 className="text-sm font-bold tracking-tight uppercase">Street Insights</h1>
-          <p className="text-xs text-muted-foreground tracking-wider uppercase mt-0.5 mb-8">
-            Boxford Partners
-          </p>
-          <h2 className="text-2xl font-bold text-foreground mb-2">Choose Your Plan</h2>
-          <p className="text-sm text-muted-foreground">
-            Real-time market intelligence and AI-powered insights
-          </p>
+    <div className="min-h-screen bg-gray-950 text-white">
+      {/* Nav */}
+      <nav className="fixed top-0 w-full bg-gray-950/80 backdrop-blur-sm border-b border-gray-800 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center gap-2">
+              <svg className="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+              <span className="text-xl font-bold">Street Insights</span>
+            </div>
+            <div className="flex items-center gap-6">
+              <Link to="/login" className="text-sm text-gray-300 hover:text-white transition-colors">Sign In</Link>
+            </div>
+          </div>
         </div>
+      </nav>
 
-        {/* Plans Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          {plans.map((plan) => (
-            <div
-              key={plan.name}
-              className={`border rounded-lg p-6 bg-card ${
-                plan.popular ? "border-primary shadow-lg" : "border"
-              }`}
-            >
-              {plan.popular && (
-                <div className="text-xs font-semibold text-primary uppercase tracking-wider mb-3">
-                  Most Popular
-                </div>
-              )}
+      {/* Hero Section */}
+      <section className="pt-32 pb-20 px-4">
+        <div className="max-w-7xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-sm text-emerald-400 mb-8">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            Choose the plan that fits your needs
+          </div>
 
-              <h3 className="text-xl font-bold text-foreground mb-4">
-                {plan.name}
-              </h3>
+          <h1 className="text-5xl sm:text-6xl font-bold mb-6 tracking-tight">
+            <span className="block">Simple, Transparent</span>
+            <span className="block text-emerald-400">Pricing</span>
+          </h1>
 
-              <div className="mb-4">
-                <span className="text-3xl font-bold text-foreground">
-                  ${plan.monthlyPrice}
-                </span>
-                <span className="text-sm text-muted-foreground">/mo</span>
-                <div className="text-xs text-muted-foreground mt-1">
-                  ${plan.yearlyPrice}/yr (save{" "}
-                  {Math.round(
-                    ((plan.monthlyPrice * 12 - plan.yearlyPrice) /
-                      (plan.monthlyPrice * 12)) *
-                      100
-                  )}
-                  %)
-                </div>
-              </div>
+          <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-16">
+            Get started with real-time market intelligence and AI-powered insights
+          </p>
 
-              <ul className="space-y-2 mb-6">
-                {plan.features.map((feature) => (
-                  <li
-                    key={feature}
-                    className="flex items-start gap-2 text-xs text-foreground"
-                  >
-                    <Check className="h-4 w-4 shrink-0 text-primary mt-0.5" />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-
-              <button
-                onClick={() => handleSelectPlan(plan.priceIdMonthly)}
-                className={`w-full py-2.5 px-4 rounded-md text-sm font-medium transition-colors ${
+          {/* Pricing Cards */}
+          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {plans.map((plan) => (
+              <div
+                key={plan.name}
+                className={`relative p-8 rounded-2xl ${
                   plan.popular
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                    ? "bg-gray-800 border-2 border-emerald-500"
+                    : "bg-gray-900/50 border border-gray-800"
                 }`}
               >
-                Get Started
-              </button>
-            </div>
-          ))}
-        </div>
+                {plan.popular && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                    <span className="px-4 py-1 bg-emerald-500 text-sm font-semibold rounded-full text-gray-950">
+                      Most Popular
+                    </span>
+                  </div>
+                )}
 
-        {/* Footer Links */}
-        <p className="text-xs text-center text-muted-foreground">
-          Already have an account?{" "}
-          <Link to="/login" className="text-primary hover:underline">
-            Sign in
-          </Link>
-        </p>
-      </div>
+                <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+
+                <div className="mb-8">
+                  <span className="text-5xl font-bold">${plan.monthlyPrice}</span>
+                  <span className="text-gray-400">/month</span>
+                  <p className="text-sm text-gray-500 mt-2">
+                    or ${plan.yearlyPrice}/year (save {Math.round(((plan.monthlyPrice * 12 - plan.yearlyPrice) / (plan.monthlyPrice * 12)) * 100)}%)
+                  </p>
+                </div>
+
+                <ul className="space-y-4 mb-8 text-left">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-3">
+                      <Check className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                      <span className="text-gray-300">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <button
+                  onClick={() => handleSelectPlan(plan.priceIdMonthly)}
+                  className={`w-full py-4 px-6 rounded-lg font-semibold transition-colors ${
+                    plan.popular
+                      ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                      : "bg-gray-800 hover:bg-gray-700 text-white border border-gray-700"
+                  }`}
+                >
+                  Get Started
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-gray-400 mt-12">
+            Already have an account?{" "}
+            <Link to="/login" className="text-emerald-400 hover:text-emerald-300 transition-colors">
+              Sign in
+            </Link>
+          </p>
+        </div>
+      </section>
     </div>
   );
 }
