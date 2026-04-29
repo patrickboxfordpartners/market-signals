@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react"
 import { useAuth } from "../hooks/useAuth"
-import { Navigate, Link, useNavigate } from "react-router-dom"
+import { Navigate, Link } from "react-router-dom"
 import { Lock } from "lucide-react"
 import logoIcon from "../assets/logo-icon.png"
 import { useBilling } from "../hooks/useBilling"
 
 export function Login() {
   const { session, loading, signIn } = useAuth()
-  const navigate = useNavigate()
   const { startCheckout } = useBilling()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
