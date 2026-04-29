@@ -1,5 +1,6 @@
 import { Check } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import logoIcon from "../assets/logo-icon.png";
 
 const plans = [
   {
@@ -42,54 +43,47 @@ export function Pricing() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <div className="border-b border-border bg-card px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <h1 className="text-xl font-bold">Street Insights</h1>
-          <button
-            onClick={() => navigate("/login")}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Sign In
-          </button>
-        </div>
-      </div>
-
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
-        <div className="text-center mb-12 max-w-2xl">
-          <h1 className="text-4xl font-bold text-foreground mb-4">
-            Choose Your Plan
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Get access to real-time market intelligence and AI-powered insights
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="w-full max-w-4xl">
+        {/* Logo */}
+        <div className="text-center mb-12">
+          <img src={logoIcon} alt="" className="h-16 w-auto mx-auto mb-3" />
+          <h1 className="text-sm font-bold tracking-tight uppercase">Street Insights</h1>
+          <p className="text-xs text-muted-foreground tracking-wider uppercase mt-0.5 mb-8">
+            Boxford Partners
+          </p>
+          <h2 className="text-2xl font-bold text-foreground mb-2">Choose Your Plan</h2>
+          <p className="text-sm text-muted-foreground">
+            Real-time market intelligence and AI-powered insights
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl w-full">
+        {/* Plans Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`border rounded-xl p-8 bg-card ${
-                plan.popular ? "border-accent shadow-lg" : "border-border"
+              className={`border rounded-lg p-6 bg-card ${
+                plan.popular ? "border-primary shadow-lg" : "border"
               }`}
             >
               {plan.popular && (
-                <div className="text-xs font-semibold text-accent uppercase tracking-wider mb-4">
+                <div className="text-xs font-semibold text-primary uppercase tracking-wider mb-3">
                   Most Popular
                 </div>
               )}
 
-              <h3 className="text-2xl font-bold text-foreground mb-2">
+              <h3 className="text-xl font-bold text-foreground mb-4">
                 {plan.name}
               </h3>
 
-              <div className="mb-6">
-                <span className="text-4xl font-bold text-foreground">
+              <div className="mb-4">
+                <span className="text-3xl font-bold text-foreground">
                   ${plan.monthlyPrice}
                 </span>
-                <span className="text-muted-foreground">/month</span>
-                <div className="text-sm text-muted-foreground mt-1">
-                  or ${plan.yearlyPrice}/year (save{" "}
+                <span className="text-sm text-muted-foreground">/mo</span>
+                <div className="text-xs text-muted-foreground mt-1">
+                  ${plan.yearlyPrice}/yr (save{" "}
                   {Math.round(
                     ((plan.monthlyPrice * 12 - plan.yearlyPrice) /
                       (plan.monthlyPrice * 12)) *
@@ -99,17 +93,13 @@ export function Pricing() {
                 </div>
               </div>
 
-              <ul className="space-y-3 mb-8">
+              <ul className="space-y-2 mb-6">
                 {plan.features.map((feature) => (
                   <li
                     key={feature}
-                    className="flex items-start gap-3 text-sm text-foreground"
+                    className="flex items-start gap-2 text-xs text-foreground"
                   >
-                    <Check
-                      className={`h-5 w-5 shrink-0 ${
-                        plan.popular ? "text-accent" : "text-muted-foreground"
-                      }`}
-                    />
+                    <Check className="h-4 w-4 shrink-0 text-primary mt-0.5" />
                     {feature}
                   </li>
                 ))}
@@ -117,10 +107,10 @@ export function Pricing() {
 
               <button
                 onClick={() => handleSelectPlan(plan.priceIdMonthly)}
-                className={`w-full py-3 px-4 rounded-lg font-semibold transition-all duration-200 hover:-translate-y-0.5 ${
+                className={`w-full py-2.5 px-4 rounded-md text-sm font-medium transition-colors ${
                   plan.popular
-                    ? "bg-accent text-white hover:bg-accent/90"
-                    : "bg-foreground text-background hover:bg-foreground/90"
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                 }`}
               >
                 Get Started
@@ -128,6 +118,14 @@ export function Pricing() {
             </div>
           ))}
         </div>
+
+        {/* Footer Links */}
+        <p className="text-xs text-center text-muted-foreground">
+          Already have an account?{" "}
+          <Link to="/login" className="text-primary hover:underline">
+            Sign in
+          </Link>
+        </p>
       </div>
     </div>
   );
