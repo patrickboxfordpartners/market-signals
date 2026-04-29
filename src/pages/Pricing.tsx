@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import logoIcon from "../assets/logo-icon.png";
 
 const CheckIcon = () => (
   <svg className="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -28,12 +29,12 @@ const plans = [
     popular: true,
     priceId: import.meta.env.VITE_STRIPE_PRICE_PRO_MONTHLY,
     features: [
-      { text: "Track up to 100 tickers" },
-      { text: "ML price predictions", bold: true },
-      { text: "Technical indicators (RSI, MACD)", boldPrefix: "Technical indicators" },
-      { text: "50 real-time alerts/month" },
-      { text: "Source credibility rankings" },
-      { text: "Advanced charts & fundamentals" },
+      "Track up to 100 tickers",
+      "<strong>ML price predictions</strong>",
+      "<strong>Technical indicators</strong> (RSI, MACD)",
+      "50 real-time alerts/month",
+      "Source credibility rankings",
+      "Advanced charts & fundamentals",
     ],
   },
   {
@@ -43,12 +44,12 @@ const plans = [
     nameColor: "text-gray-400",
     priceId: import.meta.env.VITE_STRIPE_PRICE_ENTERPRISE_MONTHLY,
     features: [
-      { text: "Unlimited tickers", boldPrefix: "Unlimited" },
-      { text: "Everything in Pro" },
-      { text: "Unlimited alerts", boldPrefix: "Unlimited" },
-      { text: "API access" },
-      { text: "Webhook integrations" },
-      { text: "Priority support" },
+      "<strong>Unlimited</strong> tickers",
+      "Everything in Pro",
+      "<strong>Unlimited</strong> alerts",
+      "API access",
+      "Webhook integrations",
+      "Priority support",
     ],
   },
 ];
@@ -104,9 +105,7 @@ export function Pricing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <a href="https://getstreetinsights.com" className="flex items-center gap-2">
-              <svg className="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
+              <img src={logoIcon} alt="Street Insights" className="h-8 w-8" />
               <span className="text-xl font-bold">Street Insights</span>
             </a>
             {/* Desktop nav */}
@@ -179,15 +178,12 @@ export function Pricing() {
                 <p className="text-gray-400 mb-6">{plan.tagline}</p>
 
                 <ul className="space-y-3 mb-8 flex-grow">
-                  {plan.features.map((feature, i) => {
-                    const text = typeof feature === "string" ? feature : feature.text;
-                    return (
-                      <li key={i} className="flex items-start gap-2 text-sm">
-                        <CheckIcon />
-                        <span>{text}</span>
-                      </li>
-                    );
-                  })}
+                  {plan.features.map((feature, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm">
+                      <CheckIcon />
+                      <span dangerouslySetInnerHTML={{ __html: feature }} />
+                    </li>
+                  )}
                 </ul>
 
                 <button
@@ -226,9 +222,7 @@ export function Pricing() {
         <div className="max-w-7xl mx-auto px-6 py-12 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <a href="https://getstreetinsights.com" className="flex items-center gap-2">
-              <svg className="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
+              <img src={logoIcon} alt="Street Insights" className="h-6 w-6" />
               <span className="font-bold">Street Insights</span>
             </a>
             <p className="text-xs text-slate-500">
