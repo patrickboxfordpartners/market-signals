@@ -21,6 +21,13 @@ export function SignUp() {
 
   const { startCheckout, loading: checkoutLoading } = useBilling()
 
+  // If user is logged in and has a plan parameter, go to checkout
+  useEffect(() => {
+    if (session && planFromUrl) {
+      startCheckout(planFromUrl)
+    }
+  }, [session, planFromUrl, startCheckout])
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -30,13 +37,6 @@ export function SignUp() {
       </div>
     )
   }
-
-  // If user is logged in and has a plan parameter, go to checkout
-  useEffect(() => {
-    if (session && planFromUrl) {
-      startCheckout(planFromUrl)
-    }
-  }, [session, planFromUrl])
 
   if (session && !planFromUrl) {
     return <Navigate to="/" replace />
