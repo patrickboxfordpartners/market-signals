@@ -1,15 +1,29 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useAuth } from "../hooks/useAuth"
-import { Navigate, Link } from "react-router-dom"
+import { Navigate, Link, useNavigate } from "react-router-dom"
 import { Lock } from "lucide-react"
 import logoIcon from "../assets/logo-icon.png"
+import { useBilling } from "../hooks/useBilling"
 
 export function Login() {
   const { session, loading, signIn } = useAuth()
+  const navigate = useNavigate()
+  const { startCheckout } = useBilling()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [submitting, setSubmitting] = useState(false)
+
+  // After email confirmation + login, check for a pending plan
+  useEffect(() => {
+    if (session) {
+      const pendingPlan = localStorage.getItem("pending_plan")
+      if (pendingPlan) {
+        localStorage.removeItem("pending_plan")
+        startCheckout(pendingPlan)
+      }
+    }
+  }, [session, startCheckout])
 
   if (loading) {
     return (
@@ -22,7 +36,10 @@ export function Login() {
   }
 
   if (session) {
-    return <Navigate to="/" replace />
+    const pendingPlan = localStorage.getItem("pending_plan")
+    if (!pendingPlan) {
+      return <Navigate to="/" replace />
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {

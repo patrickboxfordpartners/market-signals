@@ -58,11 +58,15 @@ export function SignUp() {
 
     setSubmitting(true)
     try {
-      const { error } = await supabase.auth.signUp({ email, password })
+      const { data, error } = await supabase.auth.signUp({ email, password })
       if (error) throw error
 
-      // If there's a plan in the URL, the useEffect will handle checkout after signup
-      if (!planFromUrl) {
+      // If we got a session back (no email confirmation required), checkout will
+      // be triggered by the useEffect. Otherwise show confirmation message.
+      if (!data.session) {
+        if (planFromUrl) {
+          localStorage.setItem("pending_plan", planFromUrl)
+        }
         setSuccess(true)
       }
     } catch (err: any) {
