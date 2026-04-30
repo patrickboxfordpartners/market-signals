@@ -1,7 +1,7 @@
 import { inngest } from "../client.js";
 import { supabase } from "../../integrations/supabase/client.js";
 import { extractFeatures } from "../../lib/ml-features.js";
-import { predict, activeConfig as defaultConfig, type ModelConfig } from "../../lib/ml-model.js";
+import { predict, DEFAULT_MODEL_CONFIG as defaultConfig, type ModelConfig } from "../../lib/ml-model.js";
 
 export const generatePredictions = inngest.createFunction(
   {
