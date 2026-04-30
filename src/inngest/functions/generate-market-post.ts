@@ -15,7 +15,7 @@ export const generateMarketPost = inngest.createFunction(
       const since = new Date(Date.now() - 86400000).toISOString().split("T")[0]; // date only
       const { data, error } = await supabase
         .from("mention_frequency")
-        .select("*, tickers(symbol, name)")
+        .select("*, tickers(symbol, company_name)")
         .eq("spike_detected", true)
         .gte("date", since)
         .order("mention_count", { ascending: false })
@@ -52,7 +52,7 @@ export const generateMarketPost = inngest.createFunction(
 
       const spikesSummary = spikes.map((s: Record<string, unknown>) => {
         const ticker = s.tickers as Record<string, unknown> | null;
-        return `${ticker?.symbol} (${ticker?.name}): ${s.mention_count} mentions, sentiment ${s.avg_sentiment_score ?? "N/A"}`;
+        return `${ticker?.symbol} (${ticker?.company_name}): ${s.mention_count} mentions, sentiment ${s.avg_sentiment_score ?? "N/A"}`;
       }).join("\n");
 
       const predictionsSummary = predictions.map((p: Record<string, unknown>) =>

@@ -1,7 +1,7 @@
 import { inngest } from "../client.js";
 import { supabase } from "../../integrations/supabase/client.js";
 import { extractFeatures } from "../../lib/ml-features.js";
-import { predict, activeConfig, type ModelConfig } from "../../lib/ml-model.js";
+import { predict, activeConfig as defaultConfig, type ModelConfig } from "../../lib/ml-model.js";
 
 export const generatePredictions = inngest.createFunction(
   {
@@ -24,7 +24,7 @@ export const generatePredictions = inngest.createFunction(
         .limit(1)
         .single();
 
-      return (data?.config as ModelConfig) || activeConfig;
+      return (data?.config as ModelConfig) || defaultConfig;
     });
 
     // Get active tickers
