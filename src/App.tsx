@@ -19,6 +19,8 @@ import { ContentDrafts } from './pages/ContentDrafts'
 import { PublicLeaderboard } from './pages/PublicLeaderboard'
 import { Backtest } from './pages/Backtest'
 import { Pricing } from './pages/Pricing'
+import DemoMode from './pages/DemoMode'
+import { Landing } from './pages/Landing'
 import { Analytics } from '@vercel/analytics/react'
 import * as Sentry from '@sentry/react'
 import logoIcon from './assets/logo-icon.png'
@@ -37,7 +39,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!session) {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/" replace />
   }
 
   return <>{children}</>
@@ -77,6 +79,8 @@ function App() {
         <ThemeProvider>
           <AuthProvider>
             <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/demo" element={<DemoMode />} />
               <Route path="/leaderboard" element={<PublicLeaderboard />} />
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/login" element={<Login />} />
@@ -84,7 +88,7 @@ function App() {
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route
-                path="/"
+                path="/dashboard"
                 element={
                   <ProtectedRoute>
                     <DashboardLayout />
