@@ -17,7 +17,7 @@ interface LLMProvider {
 const providers: LLMProvider[] = [
   {
     name: "xai",
-    model: "grok-3-latest",
+    model: "grok-3-mini",
     apiKey: process.env.XAI_API_KEY,
     baseURL: "https://api.x.ai/v1",
   },

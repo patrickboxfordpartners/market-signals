@@ -70,7 +70,7 @@ async function callGrok(
       Authorization: `Bearer ${XAI_API_KEY}`,
     },
     body: JSON.stringify({
-      model: "grok-3-latest",
+      model: "grok-3-mini",
       messages,
       temperature,
       max_tokens: maxTokens,

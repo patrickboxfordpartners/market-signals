@@ -138,7 +138,7 @@ export const scoreEventImpact = inngest.createFunction(
         key_factors: score.key_factors || [],
         historical_precedent: score.historical_precedent || "",
         model_provider: "xai",
-        model_name: "grok-3-latest",
+        model_name: "grok-3-mini",
         is_latest: true,
       });
 

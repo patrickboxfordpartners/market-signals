@@ -33,19 +33,19 @@ function getProviderConfigs(): LLMProviderConfig[] {
   return [
     {
       name: "xai",
-      model: "grok-beta",
+      model: "grok-3-mini",
       apiKey: import.meta.env.VITE_XAI_API_KEY || null,
       enabled: !!import.meta.env.VITE_XAI_API_KEY,
     },
     {
       name: "openai",
-      model: "gpt-4-turbo-preview",
+      model: "gpt-4o-mini",
       apiKey: import.meta.env.VITE_OPENAI_API_KEY || null,
       enabled: !!import.meta.env.VITE_OPENAI_API_KEY,
     },
     {
       name: "anthropic",
-      model: "claude-3-5-sonnet-20241022",
+      model: "claude-haiku-4-5-20251001",
       apiKey: import.meta.env.VITE_ANTHROPIC_API_KEY || null,
       enabled: !!import.meta.env.VITE_ANTHROPIC_API_KEY,
     },

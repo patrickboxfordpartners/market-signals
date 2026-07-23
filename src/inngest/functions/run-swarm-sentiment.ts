@@ -277,7 +277,7 @@ export const runSwarmSentiment = inngest.createFunction(
         symbol: symbol.toUpperCase(),
         run_date: today,
         swarm_run_id: swarmResult.runId,
-        model_used: "grok-3-latest",
+        model_used: "grok-3-mini",
         ...parsed,
         composite_delta: prev?.composite_score != null && parsed.composite_score != null
           ? Math.round((parsed.composite_score - prev.composite_score) * 100) / 100

@@ -65,7 +65,7 @@ export const generateReviewRoundup = inngest.createFunction(
           Authorization: `Bearer ${XAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "grok-2-latest",
+          model: "grok-3-mini",
           messages: [
             {
               role: "system",

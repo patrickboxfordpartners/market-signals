@@ -66,7 +66,7 @@ export const generateMarketPost = inngest.createFunction(
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${XAI_API_KEY}` },
         body: JSON.stringify({
-          model: "grok-2-latest",
+          model: "grok-3-mini",
           messages: [
             {
               role: "system",
@@ -95,7 +95,7 @@ export const generateMarketPost = inngest.createFunction(
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${XAI_API_KEY}` },
         body: JSON.stringify({
-          model: "grok-2-latest",
+          model: "grok-3-mini",
           messages: [
             {
               role: "system",
