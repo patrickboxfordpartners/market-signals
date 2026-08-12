@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom';
-import { useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, FormEvent } from 'react';
 import logoIcon from '../assets/logo-icon.png';
 import LandingFooter from '../components/LandingFooter';
 
 import { featuredFaqs } from "../data/faqs";
 export { featuredFaqs as landingFaqs } from "../data/faqs";
+import { usePageMeta } from "../hooks/usePageMeta";
 
 // ── Tokens ────────────────────────────────────────────────────────────────────
 const C = {
@@ -512,6 +513,7 @@ const faqSchema = {
 };
 
 export function Landing() {
+  usePageMeta({ title: "Street Insights — AI Stock Sentiment Tracking", description: "Real-time AI-powered stock sentiment analysis. Track market signals, news flow, and social sentiment across your portfolio with Grok-powered intelligence." });
   return (
     <div style={{ minHeight: '100vh', background: C.canvas, color: C.text, fontFamily: "'Geist', system-ui, sans-serif", WebkitFontSmoothing: 'antialiased' }}>
       <style>{GLOBAL_CSS}</style>
@@ -529,7 +531,7 @@ export function Landing() {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <img src={logoIcon} alt="" style={{ height: 26, width: 'auto' }} />
+          <img src={logoIcon} alt="Street Insights" style={{ height: 26, width: 'auto' }} />
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: '-0.01em', color: '#fff', lineHeight: 1.2 }}>Street Insights</div>
             <div style={{ fontSize: 9, color: C.muted, letterSpacing: '0.08em', textTransform: 'uppercase', lineHeight: 1 }}>by Boxford Partners</div>

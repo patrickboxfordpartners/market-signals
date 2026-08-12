@@ -184,7 +184,7 @@ export default function DemoMode() {
         <div className="container mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center gap-3">
-              <img src={logoIcon} alt="" className="h-8 w-auto" />
+              <img src={logoIcon} alt="Street Insights" className="h-8 w-auto" />
               <div>
                 <h1 className="text-sm font-bold tracking-tight">STREET INSIGHTS</h1>
                 <p className="text-xs text-gray-600 dark:text-gray-400">Interactive Demo</p>

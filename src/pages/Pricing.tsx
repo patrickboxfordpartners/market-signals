@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import logoIcon from "../assets/logo-icon.png";
 import LandingFooter from "../components/LandingFooter";
+import { usePageMeta } from "../hooks/usePageMeta";
 
 const CheckIcon = () => (
   <svg className="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -75,6 +76,10 @@ const faqs = [
 ];
 
 export function Pricing() {
+  usePageMeta({
+    title: "Pricing",
+    description: "Street Insights pricing plans. AI-powered stock sentiment tracking starting free. Pro and Enterprise tiers for serious traders and funds.",
+  });
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 

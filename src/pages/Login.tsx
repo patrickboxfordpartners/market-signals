@@ -3,9 +3,11 @@ import { useAuth } from "../hooks/useAuth"
 import { Navigate, Link } from "react-router-dom"
 import { Lock } from "lucide-react"
 import logoIcon from "../assets/logo-icon.png"
+import { usePageMeta } from "../hooks/usePageMeta"
 import { useBilling } from "../hooks/useBilling"
 
 export function Login() {
+  usePageMeta({ title: "Sign In", description: "Sign in to your Street Insights account to access AI-powered stock sentiment signals." })
   const { session, loading, signIn } = useAuth()
   const { startCheckout } = useBilling()
   const [email, setEmail] = useState("")
@@ -28,7 +30,7 @@ export function Login() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="h-10 w-10 animate-pulse">
-          <img src={logoIcon} alt="" className="h-full w-full" />
+          <img src={logoIcon} alt="Street Insights logo" className="h-full w-full" />
         </div>
       </div>
     )
@@ -59,7 +61,7 @@ export function Login() {
       <div className="w-full max-w-xs">
         {/* Logo */}
         <div className="text-center mb-8">
-          <img src={logoIcon} alt="" className="h-16 w-auto mx-auto mb-3" />
+          <img src={logoIcon} alt="Street Insights logo" className="h-16 w-auto mx-auto mb-3" />
           <h1 className="text-sm font-bold tracking-tight uppercase">Street Insights</h1>
           <p className="text-xs text-muted-foreground tracking-wider uppercase mt-0.5">
             Boxford Partners

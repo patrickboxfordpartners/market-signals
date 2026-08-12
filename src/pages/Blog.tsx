@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { posts } from "../data/posts";
 import { LandingNav } from "../components/LandingNav";
 import LandingFooter from "../components/LandingFooter";
+import { usePageMeta } from "../hooks/usePageMeta";
 
 const C = {
   canvas: "#080a0d",
@@ -14,6 +15,10 @@ const C = {
 };
 
 export function Blog() {
+  usePageMeta({
+    title: "Blog",
+    description: "Market intelligence insights, stock sentiment analysis guides, and trading signal strategies from Street Insights.",
+  });
   return (
     <div
       style={{
@@ -95,6 +100,27 @@ export function Blog() {
           </div>
         )}
       </main>
+
+      {/* Cross-links */}
+      <section style={{ maxWidth: 860, margin: "0 auto", padding: "0 24px 64px" }}>
+        <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 32, display: "flex", flexWrap: "wrap", gap: 24 }}>
+          <Link to="/faq" style={{ fontSize: 13, color: C.muted, textDecoration: "none" }}
+            onMouseEnter={e => (e.currentTarget.style.color = C.amber)}
+            onMouseLeave={e => (e.currentTarget.style.color = C.muted)}>
+            Frequently Asked Questions &rarr;
+          </Link>
+          <Link to="/pricing" style={{ fontSize: 13, color: C.muted, textDecoration: "none" }}
+            onMouseEnter={e => (e.currentTarget.style.color = C.amber)}
+            onMouseLeave={e => (e.currentTarget.style.color = C.muted)}>
+            View Pricing &rarr;
+          </Link>
+          <Link to="/demo" style={{ fontSize: 13, color: C.muted, textDecoration: "none" }}
+            onMouseEnter={e => (e.currentTarget.style.color = C.amber)}
+            onMouseLeave={e => (e.currentTarget.style.color = C.muted)}>
+            Try the Demo &rarr;
+          </Link>
+        </div>
+      </section>
 
       <LandingFooter />
     </div>

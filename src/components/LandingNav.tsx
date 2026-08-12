@@ -27,7 +27,7 @@ export function LandingNav() {
       }}
     >
       <Link to="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-        <img src={logoIcon} alt="" style={{ height: 26, width: "auto" }} />
+        <img src={logoIcon} alt="Street Insights" style={{ height: 26, width: "auto" }} />
         <div>
           <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "-0.01em", color: "#fff", lineHeight: 1.2 }}>
             Street Insights

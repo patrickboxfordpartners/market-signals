@@ -1,4 +1,7 @@
+import { usePageMeta } from "../hooks/usePageMeta";
+
 export default function Privacy() {
+  usePageMeta({ title: "Privacy Policy", description: "Street Insights privacy policy. How we collect, use, and protect your data." });
   return (
     <div className="mx-auto max-w-3xl px-6 py-20 lg:px-8">
       <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Legal</p>

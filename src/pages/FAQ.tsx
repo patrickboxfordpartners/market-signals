@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { faqs } from "../data/faqs";
 import { LandingNav } from "../components/LandingNav";
 import LandingFooter from "../components/LandingFooter";
+import { usePageMeta } from "../hooks/usePageMeta";
 
 const C = {
   canvas: "#080a0d",
@@ -27,6 +28,10 @@ const faqSchema = {
 };
 
 export function FAQ() {
+  usePageMeta({
+    title: "Frequently Asked Questions",
+    description: "Get answers about Street Insights: how AI sentiment signals work, pricing, data sources, alert delivery, and more.",
+  });
   const [openKey, setOpenKey] = useState<string | null>(null);
 
   return (
@@ -35,9 +40,18 @@ export function FAQ() {
 
       <LandingNav />
 
+      {/* Breadcrumbs */}
+      <div style={{ paddingTop: 68, maxWidth: 720, margin: "0 auto", padding: "68px 24px 0" }}>
+        <nav aria-label="Breadcrumb" style={{ fontSize: 12, color: C.faint }}>
+          <Link to="/" style={{ color: C.faint, textDecoration: "none" }}>Home</Link>
+          <span style={{ margin: "0 6px" }}>/</span>
+          <span style={{ color: C.muted }}>FAQ</span>
+        </nav>
+      </div>
+
       {/* Hero */}
-      <section style={{ paddingTop: 56, borderBottom: `1px solid ${C.border}` }}>
-        <div style={{ maxWidth: 720, margin: "0 auto", padding: "72px 24px 56px", textAlign: "center" }}>
+      <section style={{ borderBottom: `1px solid ${C.border}` }}>
+        <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 24px 56px", textAlign: "center" }}>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.amber, marginBottom: 14 }}>
             FAQ
           </div>

@@ -31,6 +31,8 @@ import { QuerySignals } from './pages/QuerySignals'
 import { Analytics } from '@vercel/analytics/react'
 import * as Sentry from '@sentry/react'
 import logoIcon from './assets/logo-icon.png'
+import { NotFound } from './pages/NotFound'
+import { StickyMobileCTA } from './components/StickyMobileCTA'
 
 const Blog = lazy(() => import('./pages/Blog').then((m) => ({ default: m.Blog })))
 const BlogPost = lazy(() => import('./pages/BlogPost').then((m) => ({ default: m.BlogPost })))
@@ -126,7 +128,9 @@ function App() {
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/blog" element={<Suspense fallback={null}><Blog /></Suspense>} />
               <Route path="/blog/:slug" element={<Suspense fallback={null}><BlogPost /></Suspense>} />
+              <Route path="*" element={<NotFound />} />
               </Routes>
+              <StickyMobileCTA />
               <CookieBanner />
               <Analytics />
             </ToastProvider>

@@ -62,7 +62,7 @@ export function ResetPassword() {
       <div className="w-full max-w-xs">
         {/* Logo */}
         <div className="text-center mb-8">
-          <img src={logoIcon} alt="" className="h-16 w-auto mx-auto mb-3" />
+          <img src={logoIcon} alt="Street Insights logo" className="h-16 w-auto mx-auto mb-3" />
           <h1 className="text-sm font-bold tracking-tight uppercase">Street Insights</h1>
           <p className="text-xs text-muted-foreground tracking-wider uppercase mt-0.5">
             Boxford Partners

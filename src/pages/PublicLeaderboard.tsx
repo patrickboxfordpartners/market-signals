@@ -93,7 +93,7 @@ export function PublicLeaderboard() {
       <div className="border-b bg-card sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src={logoIcon} alt="" className="h-8 w-auto" />
+            <img src={logoIcon} alt="Street Insights" className="h-8 w-auto" />
             <span className="text-sm font-bold tracking-tight">STREET INSIGHTS</span>
           </div>
           {user ? (
