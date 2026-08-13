@@ -753,51 +753,6 @@ export function Landing() {
         </div>
       </section>
 
-      {/* ── Social proof ── */}
-      <section style={{ padding: '100px 24px', borderTop: `1px solid ${C.border}` }}>
-        <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <div className="section-label">Early access feedback</div>
-          <h2 style={{ fontSize: 'clamp(24px, 3vw, 34px)', fontWeight: 700, letterSpacing: '-0.022em', color: '#fff', marginBottom: 48, textWrap: 'balance' }}>
-            From people using the actual product
-          </h2>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 0, border: `1px solid ${C.border}` }}>
-            {[
-              {
-                quote: "Caught the NVDA spike 18 minutes before it showed up in any headline. The mention velocity alert fired while I was still drinking coffee. That's the kind of edge I've been looking for.",
-                name: 'Jordan K.', role: 'Options trader, 6 years', initials: 'JK', color: C.amber,
-              },
-              {
-                quote: "The source ranking finally answers who to actually trust. I used to follow accounts with 80k followers who were consistently wrong. Now I filter by win rate with sample size, not follower count.",
-                name: 'Marcus T.', role: 'Swing trader, r/stocks', initials: 'MT', color: '#63b3ed',
-              },
-            ].map(t => (
-              <div key={t.name} style={{
-                padding: 32, background: C.surface,
-                borderRight: `1px solid ${C.border}`,
-                borderBottom: `1px solid ${C.border}`,
-                display: 'flex', flexDirection: 'column',
-              }}>
-                <p style={{ fontSize: 15, lineHeight: 1.75, color: 'rgba(255,255,255,0.7)', flex: 1, marginBottom: 28, textWrap: 'pretty' }}>
-                  "{t.quote}"
-                </p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingTop: 20, borderTop: `1px solid ${C.border}` }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: '50%',
-                    background: `${t.color}18`, border: `1px solid ${t.color}30`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 11, fontWeight: 700, color: t.color, flexShrink: 0,
-                  }}>{t.initials}</div>
-                  <div>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>{t.name}</p>
-                    <p style={{ fontSize: 11, color: C.faint }}>{t.role}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ── Pricing ── */}
       <section style={{ padding: '100px 24px', borderTop: `1px solid ${C.border}`, background: 'rgba(255,255,255,0.01)' }}>
