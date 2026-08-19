@@ -23,9 +23,8 @@ export interface MacroOverview {
   lastUpdated: string;
 }
 
-// FRED API Configuration
-const FRED_API_KEY = import.meta.env.VITE_FRED_API_KEY;
-const FRED_BASE_URL = "https://api.stlouisfed.org/fred";
+// FRED API Configuration - now proxied through Supabase Edge Function
+import { supabase } from '../integrations/supabase/client';
 
 // Common FRED series IDs
 const FRED_SERIES = {
@@ -49,20 +48,23 @@ async function fetchFREDSeries(
   name: string,
   category: EconomicIndicator["category"]
 ): Promise<EconomicIndicator | null> {
-  if (!FRED_API_KEY) {
-    console.warn("[economic-data] FRED API key not configured");
-    return null;
-  }
-
   try {
-    const url = `${FRED_BASE_URL}/series/observations?series_id=${seriesId}&api_key=${FRED_API_KEY}&file_type=json&limit=1&sort_order=desc`;
+    // Call secure Supabase Edge Function proxy
+    const { data, error } = await supabase.functions.invoke('fred-proxy', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: {
+        series_id: seriesId,
+        endpoint: 'series/observations'
+      }
+    })
 
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`FRED API error: ${response.status}`);
+    if (error) {
+      console.warn(`[economic-data] FRED proxy error: ${error.message}`)
+      return null
     }
-
-    const data = await response.json();
 
     if (!data.observations || data.observations.length === 0) {
       return null;
@@ -169,35 +171,14 @@ export async function fetchEconomicIndicatorsByCategory(
  * Fetch historical data for a series (for charting)
  */
 export async function fetchHistoricalSeries(
-  seriesId: string,
-  startDate: string,
-  endDate: string
+  _seriesId: string,
+  _startDate: string,
+  _endDate: string
 ): Promise<Array<{ date: string; value: number }>> {
-  if (!FRED_API_KEY) {
-    console.warn("[economic-data] FRED API key not configured");
-    return [];
-  }
-
-  try {
-    const url = `${FRED_BASE_URL}/series/observations?series_id=${seriesId}&api_key=${FRED_API_KEY}&file_type=json&observation_start=${startDate}&observation_end=${endDate}`;
-
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`FRED API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    return (data.observations || [])
-      .filter((obs: any) => obs.value !== ".")
-      .map((obs: any) => ({
-        date: obs.date,
-        value: parseFloat(obs.value),
-      }));
-  } catch (error: any) {
-    console.error(`[economic-data] Error fetching historical ${seriesId}:`, error.message);
-    return [];
-  }
+  // Note: Historical data not yet implemented via proxy
+  // Would need additional endpoint parameter support in fred-proxy
+  console.warn("[economic-data] Historical series not yet supported via proxy");
+  return [];
 }
 
 /**

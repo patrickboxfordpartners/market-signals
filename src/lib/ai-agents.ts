@@ -6,7 +6,7 @@
 // @ts-nocheck
 
 import { supabase } from "../integrations/supabase/client";
-import { routeLLMRequest } from "./llm-router";
+import { routeLLMRequest } from "./llm-router-secure";
 import { getEconomicContextForAI } from "./economic-data";
 import { fmpClient, type HistoricalPrice } from "./fmp";
 import { parseLLMJson } from "./llm-json.js";

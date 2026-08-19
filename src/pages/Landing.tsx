@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useState, useEffect, useRef, FormEvent } from 'react';
+import { useState, useEffect, useRef, type FormEvent } from 'react';
 import logoIcon from '../assets/logo-icon.png';
 import LandingFooter from '../components/LandingFooter';
 

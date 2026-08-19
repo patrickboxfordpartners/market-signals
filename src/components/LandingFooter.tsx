@@ -93,14 +93,14 @@ export default function LandingFooter() {
           </a>
           {dot}
           <a
-            href="https://cal.com/boxfordpartners"
+            href="https://cal.com/boxfordpartners/market-signals-demo"
             target="_blank"
             rel="noopener noreferrer"
             style={{ color: C.muted, textDecoration: 'none' }}
             onMouseEnter={e => (e.currentTarget.style.color = C.text)}
             onMouseLeave={e => (e.currentTarget.style.color = C.muted)}
           >
-            Book a call
+            Book a demo
           </a>
         </div>
 
